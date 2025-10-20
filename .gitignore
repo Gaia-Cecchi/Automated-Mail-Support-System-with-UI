@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+SAIMA_venv/
+env_saima/
+
+# Environment variables
+.env
+env.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+api_logs.txt
+ai_logs.txt
+ai_logs.xlsx
+
+# Config files with sensitive data
+gui/config_gui.json
+gui/reparti_config.json
+config.json
+
+# Generated files
+email.pdf
+sql_response.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific - Manuals
+manuals/
+*.pdf
+
+# Datasets
+dataset/
+dataset/1
+dataset/2
+dataset/3
+dataset/4
+dataset/5

@@ -1,0 +1,12 @@
+[
+  {
+    "nome": "sales",
+    "descrizione": "Sales Department - Orders and quotes management",
+    "email": "sales@example.com"
+  },
+  {
+    "nome": "support",
+    "descrizione": "Technical Support Department - Customer assistance",
+    "email": "support@example.com"
+  }
+]
