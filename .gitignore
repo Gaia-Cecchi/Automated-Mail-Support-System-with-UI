@@ -50,6 +50,22 @@ ai_logs.xlsx
 gui/config_gui.json
 gui/reparti_config.json
 config.json
+config_api.json
+reparti_api.json
+backend/config_api.json
+backend/reparti_api.json
+
+# Node.js / Frontend
+node_modules/
+figmamake/node_modules/
+figmamake/dist/
+figmamake/.cache/
+*.tsbuildinfo
+package-lock.json
+
+# Frontend env files
+figmamake/.env
+figmamake/.env.local
 
 # Generated files
 email.pdf
