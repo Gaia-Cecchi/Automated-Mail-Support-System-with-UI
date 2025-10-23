@@ -37,6 +37,36 @@ except ImportError:
 
 load_dotenv()
 
+# Helper function per rilevare messaggi fallback HTML
+def _is_html_fallback_message(text):
+    """
+    Rileva se il testo plain è solo un messaggio fallback tipo
+    "This email requires HTML support" o "View in browser".
+    """
+    if not text or len(text) > 500:
+        # Se il testo è lungo, probabilmente è contenuto reale
+        return False
+    
+    text_lower = text.lower().strip()
+    
+    # Indicatori comuni di messaggi fallback
+    fallback_indicators = [
+        "email client might not support html",
+        "view this email in",
+        "open this email in",
+        "view in browser",
+        "click here to view",
+        "requires html",
+        "html formatted email",
+        "enable html",
+    ]
+    
+    for indicator in fallback_indicators:
+        if indicator in text_lower:
+            return True
+    
+    return False
+
 # Configuration mail from .env file
 imap_host = os.getenv('IMAP')
 smtp_host = os.getenv('SMTP')
@@ -139,11 +169,16 @@ def get_email_body(email_message):
             ctype = part.get_content_type()
             cdispo = str(part.get('Content-Disposition'))
 
-            # Cerca prima text/plain (preferito per semplicità)
+            # Raccogli sia text/plain che text/html
             if ctype == 'text/plain' and 'attachment' not in cdispo:
-                body = part.get_payload(decode=True)
-            # Se non c'è text/plain, prendi text/html
-            elif ctype == 'text/html' and 'attachment' not in cdispo and not body:
+                payload = part.get_payload(decode=True)
+                if payload:
+                    decoded = payload.decode('utf-8', errors='ignore')
+                    # Controlla se non è un messaggio fallback HTML
+                    if not _is_html_fallback_message(decoded):
+                        body = payload
+            # Salva sempre HTML se disponibile
+            elif ctype == 'text/html' and 'attachment' not in cdispo:
                 html_body = part.get_payload(decode=True)
     else:
         # not multipart - i.e. plain text, no attachments

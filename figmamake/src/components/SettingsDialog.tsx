@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Settings, Server, Key, MapPin, Bell, Trash2, Zap, Languages, Edit2, Check, X } from 'lucide-react';
 import { AppSettings, Department } from '../types/email';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { useTranslation } from '../hooks/useTranslation';
@@ -26,6 +26,11 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
   const [internalOpen, setInternalOpen] = useState(false);
   const { t } = useTranslation(language);
+  
+  // Sync localSettings when settings prop changes (e.g., loaded from backend)
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
   
   // Use controlled or uncontrolled mode
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;

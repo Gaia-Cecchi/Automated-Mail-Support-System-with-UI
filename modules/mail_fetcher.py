@@ -107,18 +107,20 @@ class MailFetcher:
                 content_type = part.get_content_type()
                 content_disposition = str(part.get('Content-Disposition', ''))
                 
-                # Preferisci text/plain
+                # Raccogli sia text/plain che text/html
                 if content_type == 'text/plain' and 'attachment' not in content_disposition:
                     try:
                         payload = part.get_payload(decode=True)
                         if payload:
-                            body = payload.decode('utf-8', errors='ignore')
-                            break
+                            decoded = payload.decode('utf-8', errors='ignore')
+                            # Controlla se è un messaggio "HTML not supported"
+                            if not self._is_html_fallback_message(decoded):
+                                body = decoded
                     except Exception as e:
                         logger.warning(f"Error decoding text/plain part: {e}")
                 
-                # Se non troviamo text/plain, salva HTML
-                elif content_type == 'text/html' and 'attachment' not in content_disposition and not body:
+                # Salva sempre HTML se disponibile
+                elif content_type == 'text/html' and 'attachment' not in content_disposition:
                     try:
                         payload = part.get_payload(decode=True)
                         if payload:
@@ -145,6 +147,29 @@ class MailFetcher:
             body = self._html_to_text(html_body)
         
         return body.strip()
+    
+    def _is_html_fallback_message(self, text: str) -> bool:
+        """Check if text is just a fallback message for HTML emails"""
+        text_lower = text.lower().strip()
+        
+        # Messaggi comuni che indicano che il contenuto reale è in HTML
+        fallback_indicators = [
+            "email client might not support html",
+            "this email requires html",
+            "view this email in a browser",
+            "view in browser",
+            "open this email in another email client",
+            "html formatted email",
+            "enable html to view"
+        ]
+        
+        # Se il testo è molto corto e contiene uno di questi indicatori, è un fallback
+        if len(text) < 500:  # Messaggi di fallback sono tipicamente brevi
+            for indicator in fallback_indicators:
+                if indicator in text_lower:
+                    return True
+        
+        return False
     
     def _html_to_text(self, html_content: str) -> str:
         """Convert HTML to plain text"""

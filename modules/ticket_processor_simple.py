@@ -125,7 +125,25 @@ Choose one of the departments listed above. If confidence < 70%, indicate need f
                 logger.error(f"API error {response.status_code}: {response.text}")
                 return None
             
-            result_text = response.json()["choices"][0]["message"]["content"]
+            logger.info(f"API response status: {response.status_code}")
+            logger.info(f"API response: {response.text[:500]}")  # Log first 500 chars
+            
+            response_json = response.json()
+            logger.info(f"Response JSON keys: {response_json.keys()}")
+            
+            result_text = response_json["choices"][0]["message"]["content"]
+            logger.info(f"Result text: {result_text}")
+            
+            # Remove markdown code blocks if present (Ollama often wraps in ```json ... ```)
+            result_text = result_text.strip()
+            if result_text.startswith("```json"):
+                result_text = result_text[7:]  # Remove ```json
+            if result_text.startswith("```"):
+                result_text = result_text[3:]  # Remove ```
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]  # Remove trailing ```
+            result_text = result_text.strip()
+            
             result = json.loads(result_text)
             
             # Validate

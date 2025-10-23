@@ -27,67 +27,64 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<string | undefined>(undefined);
   
-  const [settings, setSettings] = useState<AppSettings>(() => {
-    const saved = localStorage.getItem('emailSystemSettings');
-    return saved ? JSON.parse(saved) : {
-      emailCredentials: {
-        server: '',
-        username: 'support@example.com',
-        password: '',
-        imap: 'imap.example.com',
-        smtp: 'smtp.example.com'
-      },
-      groq: {
-        apiKey: '',
-        model: 'llama-3.1-8b-instant'
-      },
-      ollama: {
-        url: 'http://localhost:11434/v1',
-        model: 'llama3.1'
-      },
-      azure: {
-        apiKey: '',
-        enabled: false
-      },
-      automaticRouting: {
-        enabled: false,
-        checkInterval: 5
-      },
-      departments: [
-        { nome: 'North', descrizione: 'North Italy customer management', email: 'north@example.com' },
-        { nome: 'Center', descrizione: 'Central Italy customer management', email: 'center@example.com' },
-        { nome: 'South', descrizione: 'South Italy customer management', email: 'south@example.com' },
-        { nome: 'Technical Support', descrizione: 'Technical assistance and malfunctions', email: 'support@example.com' },
-        { nome: 'Administration', descrizione: 'Accounting and administration', email: 'admin@example.com' }
-      ],
-      notificationsEnabled: true,
-      darkMode: false,
-      language: 'en'
-    };
+  // Initialize with default settings (will be loaded from backend)
+  const [settings, setSettings] = useState<AppSettings>({
+    emailCredentials: {
+      server: '',
+      username: '',
+      password: '',
+      imap: '',
+      smtp: ''
+    },
+    groq: {
+      apiKey: '',
+      model: 'llama-3.1-8b-instant'
+    },
+    ollama: {
+      url: 'http://localhost:11434/v1',
+      model: 'llama3.1'
+    },
+    azure: {
+      apiKey: '',
+      enabled: false
+    },
+    automaticRouting: {
+      enabled: false,
+      checkInterval: 5
+    },
+    departments: [],
+    notificationsEnabled: true,
+    darkMode: false,
+    language: 'en'
   });
+
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   
   const { t } = useTranslation(settings.language);
   const selectedEmail = emails.find(e => e.id === selectedEmailId);
   
-  // Load settings from backend on mount
+  // Load settings from backend on mount (single source of truth)
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        console.log('Loading settings from backend...');
         const backendSettings = await apiService.getSettings();
+        console.log('Settings loaded from backend:', backendSettings);
+        console.log('Departments from backend:', backendSettings.departments);
         setSettings(backendSettings);
+        setSettingsLoaded(true);
       } catch (error) {
         console.error('Failed to load settings from backend:', error);
-        // Fall back to localStorage or defaults
+        toast.error('Settings Error', {
+          description: 'Could not load settings from server. Using defaults.',
+          duration: 5000
+        });
+        setSettingsLoaded(true);
       }
     };
     
     loadSettings();
   }, []);
-  
-  // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem('emailSystemSettings', JSON.stringify(settings));
-  }, [settings]);
 
   useEffect(() => {
     if (settings.darkMode) {
@@ -440,6 +437,9 @@ export default function App() {
     try {
       const loadingToast = toast.loading('💾 Saving settings...');
       
+      console.log('Saving settings to backend:', newSettings);
+      console.log('Departments to save:', newSettings.departments);
+      
       // Save to backend
       await apiService.saveSettings(newSettings);
       
@@ -448,17 +448,19 @@ export default function App() {
       // Update local state
       setSettings(newSettings);
       
+      console.log('Settings saved successfully');
+      
       const { t: tNew } = useTranslation(newSettings.language);
       toast.success(tNew('settingsSaved'), {
         description: tNew('changesApplied'),
         duration: 3000
       });
     } catch (error) {
+      console.error('Error saving settings:', error);
       toast.error('Error saving settings', {
         description: error instanceof Error ? error.message : 'Failed to save settings',
         duration: 5000
       });
-      console.error('Error saving settings:', error);
     }
   };
 

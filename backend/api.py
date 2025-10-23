@@ -35,30 +35,27 @@ ticket_processor = None
 automation_thread = None
 automation_enabled = False
 
+# Log initial configuration
+logger.info(f"Config file: config_api.json")
+logger.info(f"Departments file: reparti_api.json")
+logger.info(f"Initial departments loaded: {reparti_manager.get_all()}")
+logger.info(f"Number of departments: {len(reparti_manager.get_all())}")
+
 def get_ticket_processor():
-    """Initialize ticket processor with current settings"""
+    """Initialize ticket processor with current settings - Ollama only"""
     global ticket_processor
     
-    groq_key = config_manager.get('GROQ_API_KEY', '')
-    groq_model = config_manager.get('GROQ_MODEL', 'llama-3.1-8b-instant')
-    ollama_url = config_manager.get('OLLAMA_URL', '')
-    ollama_model = config_manager.get('OLLAMA_MODEL', 'llama3.1')
+    ollama_url = config_manager.get('OLLAMA_URL', 'http://localhost:11434/v1')
+    ollama_model = config_manager.get('OLLAMA_MODEL', 'gemma3:4b')
     
-    if groq_key:
-        ticket_processor = TicketProcessorSimple(
-            api_key=groq_key,
-            provider="groq",
-            model=groq_model
-        )
-    elif ollama_url:
-        ticket_processor = TicketProcessorSimple(
-            api_key="ollama",
-            provider="ollama",
-            model=ollama_model,
-            api_base=ollama_url
-        )
-    else:
-        raise Exception("Configure GROQ_API_KEY or OLLAMA_URL")
+    logger.info(f"Using Ollama: {ollama_url} with model {ollama_model}")
+    
+    ticket_processor = TicketProcessorSimple(
+        api_key="ollama",
+        provider="ollama",
+        model=ollama_model,
+        api_base=ollama_url
+    )
     
     return ticket_processor
 
@@ -68,6 +65,14 @@ def get_ticket_processor():
 def get_settings():
     """Get current system settings"""
     try:
+        logger.info(f"GET /api/settings called")
+        logger.info(f"reparti_manager instance: {id(reparti_manager)}")
+        logger.info(f"reparti_manager._reparti: {reparti_manager._reparti}")
+        
+        departments = reparti_manager.get_all()
+        logger.info(f"GET /api/settings - Departments returned: {departments}")
+        logger.info(f"GET /api/settings - Number of departments: {len(departments)}")
+        
         settings = {
             'emailCredentials': {
                 'server': config_manager.get('IMAP', ''),
@@ -92,7 +97,7 @@ def get_settings():
                 'enabled': config_manager.get('AUTOMATIC_ROUTING', False),
                 'checkInterval': int(config_manager.get('CHECK_INTERVAL', 5))
             },
-            'departments': reparti_manager.get_all(),
+            'departments': departments,
             'notificationsEnabled': config_manager.get('NOTIFICATIONS', True),
             'darkMode': config_manager.get('DARK_MODE', False),
             'language': config_manager.get('LANGUAGE', 'en')
@@ -141,19 +146,26 @@ def save_settings():
         
         config_manager.save()
         
-        # Update departments
+        # Update departments (only if explicitly provided and not empty)
         if 'departments' in data:
-            # Clear and re-add departments
-            for dept in reparti_manager.get_all():
-                reparti_manager.remove_reparto(dept['nome'])
+            logger.info(f"POST /api/settings - Departments in request: {data['departments']}")
             
-            for dept in data['departments']:
-                reparti_manager.add_reparto(
-                    dept['nome'],
-                    dept['descrizione'],
-                    dept['email']
-                )
-            reparti_manager.save()
+            # Only update if departments list is not empty or if explicitly clearing
+            if data['departments'] or data.get('clearDepartments', False):
+                # Clear and re-add departments
+                for dept in reparti_manager.get_all():
+                    reparti_manager.remove_reparto(dept['nome'])
+                
+                for dept in data['departments']:
+                    reparti_manager.add_reparto(
+                        dept['nome'],
+                        dept['descrizione'],
+                        dept['email']
+                    )
+                reparti_manager.save()
+                logger.info(f"Departments updated. New count: {len(reparti_manager.get_all())}")
+            else:
+                logger.warning("Received empty departments list - keeping existing departments")
         
         return jsonify({'success': True, 'message': 'Settings saved successfully'}), 200
     except Exception as e:
@@ -267,13 +279,18 @@ def process_email():
         
         # Get departments
         reparti = reparti_manager.get_all()
+        logger.info(f"Departments loaded: {reparti}")
+        logger.info(f"Number of departments: {len(reparti)}")
+        
         if not reparti:
+            logger.error("No departments configured!")
             return jsonify({'error': 'No departments configured'}), 400
         
         # Analyze with AI
-        # Note: We need the original email message for full processing
-        # For now, we'll create a simplified version
-        analysis, reparto = processor.process_ticket_simple(
+        # Note: We don't have the original email.message.Message object in API
+        # Pass None for email_message as it's not used in analyze_email
+        analysis, reparto = processor.process_ticket(
+            email_message=None,
             subject=email_data['subject'],
             body=email_data['body'],
             pdf_content=email_data.get('pdfContent', ''),
