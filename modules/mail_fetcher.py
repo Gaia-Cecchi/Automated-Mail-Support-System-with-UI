@@ -98,27 +98,104 @@ class MailFetcher:
         return ''.join(result)
     
     def _extract_body(self, msg: Message) -> str:
-        """Extract message body"""
+        """Extract message body (prefers plain text, converts HTML if needed)"""
         body = ""
+        html_body = ""
         
         if msg.is_multipart():
             for part in msg.walk():
                 content_type = part.get_content_type()
+                content_disposition = str(part.get('Content-Disposition', ''))
                 
-                if content_type == 'text/plain':
+                # Preferisci text/plain
+                if content_type == 'text/plain' and 'attachment' not in content_disposition:
                     try:
                         payload = part.get_payload(decode=True)
                         if payload:
                             body = payload.decode('utf-8', errors='ignore')
                             break
                     except Exception as e:
-                        logger.warning(f"Error decoding message part: {e}")
+                        logger.warning(f"Error decoding text/plain part: {e}")
+                
+                # Se non troviamo text/plain, salva HTML
+                elif content_type == 'text/html' and 'attachment' not in content_disposition and not body:
+                    try:
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            html_body = payload.decode('utf-8', errors='ignore')
+                    except Exception as e:
+                        logger.warning(f"Error decoding text/html part: {e}")
         else:
             try:
                 payload = msg.get_payload(decode=True)
                 if payload:
-                    body = payload.decode('utf-8', errors='ignore')
+                    # Controlla se è HTML
+                    content_type = msg.get_content_type()
+                    decoded = payload.decode('utf-8', errors='ignore')
+                    
+                    if content_type == 'text/html':
+                        html_body = decoded
+                    else:
+                        body = decoded
             except Exception as e:
                 logger.warning(f"Error decoding message: {e}")
         
+        # Se abbiamo solo HTML, convertiamolo in testo
+        if not body and html_body:
+            body = self._html_to_text(html_body)
+        
         return body.strip()
+    
+    def _html_to_text(self, html_content: str) -> str:
+        """Convert HTML to plain text"""
+        try:
+            from html.parser import HTMLParser
+            import re
+            
+            class HTMLTextExtractor(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.text = []
+                    self.skip_tags = {'script', 'style', 'head', 'title', 'meta', '[document]'}
+                    self.current_tag = None
+                
+                def handle_starttag(self, tag, attrs):
+                    self.current_tag = tag
+                    # Aggiungi spazio dopo link
+                    if tag == 'a':
+                        for attr, value in attrs:
+                            if attr == 'href':
+                                self.text.append(f' ')
+                
+                def handle_endtag(self, tag):
+                    self.current_tag = None
+                    # Aggiungi nuova riga dopo elementi blocco
+                    if tag in {'p', 'div', 'br', 'tr', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}:
+                        self.text.append('\n')
+                
+                def handle_data(self, data):
+                    if self.current_tag not in self.skip_tags:
+                        text = data.strip()
+                        if text:
+                            self.text.append(text + ' ')
+            
+            parser = HTMLTextExtractor()
+            parser.feed(html_content)
+            text = ''.join(parser.text)
+            
+            # Pulisci il testo
+            text = re.sub(r'\n\s*\n', '\n\n', text)  # Rimuovi righe vuote multiple
+            text = re.sub(r' +', ' ', text)  # Rimuovi spazi multipli
+            text = text.strip()
+            
+            return text
+            
+        except Exception as e:
+            logger.warning(f"Error converting HTML to text: {e}")
+            # Fallback: rimozione tag HTML con regex
+            import re
+            text = re.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
+            text = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
+            text = re.sub(r'<[^>]+>', '', text)
+            text = re.sub(r'\s+', ' ', text)
+            return text.strip()

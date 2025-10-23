@@ -129,54 +129,170 @@ def read_pdf_attachment(msg):
 def get_email_body(email_message):
     if email_message is None:
         return ""
+    
     body = ""
+    html_body = ""
     subject = email_message.get('Subject', '')  # Ottieni l'oggetto del messaggio
+    
     if email_message.is_multipart():
         for part in email_message.walk():
             ctype = part.get_content_type()
             cdispo = str(part.get('Content-Disposition'))
 
-            # skip any text/plain (txt) attachments
+            # Cerca prima text/plain (preferito per semplicità)
             if ctype == 'text/plain' and 'attachment' not in cdispo:
-                body = part.get_payload(decode=True)  # decode
-                break
-    # not multipart - i.e. plain text, no attachments, keeping fingers crossed
+                body = part.get_payload(decode=True)
+            # Se non c'è text/plain, prendi text/html
+            elif ctype == 'text/html' and 'attachment' not in cdispo and not body:
+                html_body = part.get_payload(decode=True)
     else:
+        # not multipart - i.e. plain text, no attachments
         body = email_message.get_payload(decode=True)
-        print("Corpo dell'email: ", body)
-
+    
+    # Se abbiamo solo HTML, convertiamolo in testo
+    if not body and html_body:
+        try:
+            from html.parser import HTMLParser
+            
+            class HTMLTextExtractor(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.text = []
+                    self.skip_tags = {'script', 'style', 'head', 'title', 'meta', '[document]'}
+                    self.current_tag = None
+                
+                def handle_starttag(self, tag, attrs):
+                    self.current_tag = tag
+                
+                def handle_endtag(self, tag):
+                    self.current_tag = None
+                    # Aggiungi nuova riga dopo paragrafi, div, br
+                    if tag in {'p', 'div', 'br', 'tr', 'li'}:
+                        self.text.append('\n')
+                
+                def handle_data(self, data):
+                    if self.current_tag not in self.skip_tags:
+                        text = data.strip()
+                        if text:
+                            self.text.append(text + ' ')
+            
+            parser = HTMLTextExtractor()
+            html_text = html_body.decode('utf-8', errors='ignore')
+            parser.feed(html_text)
+            body_text = ''.join(parser.text)
+            
+            # Rimuovi linee vuote multiple
+            import re
+            body_text = re.sub(r'\n\s*\n', '\n\n', body_text)
+            body_text = body_text.strip()
+            
+        except Exception as e:
+            # Fallback: rimuovi tag HTML con regex semplice
+            import re
+            body_text = html_body.decode('utf-8', errors='ignore')
+            body_text = re.sub(r'<style[^>]*>.*?</style>', '', body_text, flags=re.DOTALL | re.IGNORECASE)
+            body_text = re.sub(r'<script[^>]*>.*?</script>', '', body_text, flags=re.DOTALL | re.IGNORECASE)
+            body_text = re.sub(r'<[^>]+>', '', body_text)
+            body_text = re.sub(r'\s+', ' ', body_text)
+            body_text = body_text.strip()
+        
+        body = body_text.encode('utf-8')
+    
+    # Decodifica il body
+    if body:
+        body_decoded = body.decode('utf-8', errors='ignore')
+    else:
+        body_decoded = "[Email senza contenuto testuale]"
+    
     # Concatena l'oggetto e il corpo del messaggio
-    body = f"{subject}\n\n{body.decode('utf-8', errors='ignore')}"
-    return body
+    full_body = f"{subject}\n\n{body_decoded}"
+    return full_body
 
 # dalla mail estrae il corpo del testo e anche quello del pdf allegato e returna content
 def get_email_content(email_message):
     if email_message is None:
         return ""
+    
     body = ""
+    html_body = ""
     pdf_content = ""
-    subject = email_message.get('Subject', '')  # Ottieni l'oggetto del messaggio
+    subject = email_message.get('Subject', '')
+    
     if email_message.is_multipart():
         for part in email_message.walk():
             ctype = part.get_content_type()
             cdispo = str(part.get('Content-Disposition'))
 
-            # skip any text/plain (txt) attachments
+            # Cerca text/plain (preferito)
             if ctype == 'text/plain' and 'attachment' not in cdispo:
-                body = part.get_payload(decode=True)  # decode
+                body = part.get_payload(decode=True)
+            # Se non c'è text/plain, prendi text/html
+            elif ctype == 'text/html' and 'attachment' not in cdispo and not body:
+                html_body = part.get_payload(decode=True)
+            # Estrai PDF
             elif ctype == 'application/pdf':
                 pdf_data = part.get_payload(decode=True)
                 pdf_file = io.BytesIO(pdf_data)
                 with pdfplumber.open(pdf_file) as pdf:
                     for page in pdf.pages:
                         pdf_content += page.extract_text()
-    # not multipart - i.e. plain text, no attachments, keeping fingers crossed
     else:
         body = email_message.get_payload(decode=True)
-        print("Corpo dell'email: ", body)
+    
+    # Se abbiamo solo HTML, convertiamolo
+    if not body and html_body:
+        try:
+            from html.parser import HTMLParser
+            
+            class HTMLTextExtractor(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.text = []
+                    self.skip_tags = {'script', 'style', 'head', 'title', 'meta', '[document]'}
+                    self.current_tag = None
+                
+                def handle_starttag(self, tag, attrs):
+                    self.current_tag = tag
+                
+                def handle_endtag(self, tag):
+                    self.current_tag = None
+                    if tag in {'p', 'div', 'br', 'tr', 'li'}:
+                        self.text.append('\n')
+                
+                def handle_data(self, data):
+                    if self.current_tag not in self.skip_tags:
+                        text = data.strip()
+                        if text:
+                            self.text.append(text + ' ')
+            
+            parser = HTMLTextExtractor()
+            html_text = html_body.decode('utf-8', errors='ignore')
+            parser.feed(html_text)
+            body_text = ''.join(parser.text)
+            
+            import re
+            body_text = re.sub(r'\n\s*\n', '\n\n', body_text)
+            body_text = body_text.strip()
+            
+        except Exception as e:
+            import re
+            body_text = html_body.decode('utf-8', errors='ignore')
+            body_text = re.sub(r'<style[^>]*>.*?</style>', '', body_text, flags=re.DOTALL | re.IGNORECASE)
+            body_text = re.sub(r'<script[^>]*>.*?</script>', '', body_text, flags=re.DOTALL | re.IGNORECASE)
+            body_text = re.sub(r'<[^>]+>', '', body_text)
+            body_text = re.sub(r'\s+', ' ', body_text)
+            body_text = body_text.strip()
+        
+        body = body_text.encode('utf-8')
+    
+    # Decodifica
+    if body:
+        body_decoded = body.decode('utf-8', errors='ignore')
+    else:
+        body_decoded = "[Email senza contenuto testuale]"
 
-    # Concatena l'oggetto, il corpo del messaggio e il contenuto del PDF
-    content = f"{subject}\n\n{body.decode('utf-8', errors='ignore')}\n\n{pdf_content}"
+    # Concatena oggetto, corpo e PDF
+    content = f"{subject}\n\n{body_decoded}\n\n{pdf_content}"
     return str(content)
 
 # Invia llm_response come risposta all'email
