@@ -25,16 +25,41 @@ interface SettingsDialogProps {
 export function SettingsDialog({ settings, onSave, language, open: controlledOpen, onOpenChange, defaultTab }: SettingsDialogProps) {
   const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
   const [internalOpen, setInternalOpen] = useState(false);
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
   const { t } = useTranslation(language);
+  
+  // Use controlled or uncontrolled mode
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   
   // Sync localSettings when settings prop changes (e.g., loaded from backend)
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
   
-  // Use controlled or uncontrolled mode
-  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-  const setOpen = onOpenChange || setInternalOpen;
+  // Load Ollama models when dialog opens
+  useEffect(() => {
+    if (open && ollamaModels.length === 0) {
+      loadOllamaModels();
+    }
+  }, [open]);
+  
+  const loadOllamaModels = async () => {
+    setLoadingModels(true);
+    try {
+      const response = await fetch('http://localhost:11434/api/tags');
+      if (response.ok) {
+        const data = await response.json();
+        const models = data.models.map((m: any) => m.name);
+        setOllamaModels(models);
+      }
+    } catch (error) {
+      console.error('Failed to load Ollama models:', error);
+    } finally {
+      setLoadingModels(false);
+    }
+  };
 
   const handleSave = () => {
     onSave(localSettings);
@@ -265,31 +290,36 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
                     </div>
                     <div className="space-y-3">
                       <Label htmlFor="ollamaModel">{t('model')}</Label>
-                      <Select
-                        value={['llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'].includes(localSettings.ollama.model) ? localSettings.ollama.model : 'custom'}
-                        onValueChange={(value) => {
-                          if (value === 'custom') {
-                            updateOllama('model', '');
-                          } else {
-                            updateOllama('model', value);
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a model" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="llama-3.1-8b-instant">llama-3.1-8b-instant</SelectItem>
-                          <SelectItem value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</SelectItem>
-                          <SelectItem value="mixtral-8x7b-32768">mixtral-8x7b-32768</SelectItem>
-                          <SelectItem value="gemma2-9b-it">gemma2-9b-it</SelectItem>
-                          <SelectItem value="custom">{t('customModel') || 'Custom Model'}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {!['llama-3.1-8b-instant', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'].includes(localSettings.ollama.model) && (
+                      {loadingModels ? (
+                        <div className="text-sm text-gray-500">Loading models...</div>
+                      ) : (
+                        <Select
+                          value={ollamaModels.includes(localSettings.ollama.model) ? localSettings.ollama.model : 'custom'}
+                          onValueChange={(value) => {
+                            if (value === 'custom') {
+                              updateOllama('model', '');
+                            } else {
+                              updateOllama('model', value);
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a model" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ollamaModels.map((model) => (
+                              <SelectItem key={model} value={model}>
+                                {model}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="custom">{t('customModel') || 'Custom Model'}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {!ollamaModels.includes(localSettings.ollama.model) && (
                         <Input
                           id="ollamaModel"
-                          placeholder="llama3.1"
+                          placeholder="gemma3:4b"
                           value={localSettings.ollama.model}
                           onChange={(e) => updateOllama('model', e.target.value)}
                         />

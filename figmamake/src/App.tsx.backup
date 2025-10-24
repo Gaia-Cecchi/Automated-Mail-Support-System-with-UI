@@ -1,27 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Dashboard } from './components/Dashboard';
-import { CompactEmailList } from './components/CompactEmailList';
-import { EmailDetailModal } from './components/EmailDetailModal';
+import { EmailList } from './components/EmailList';
+import { EmailDetail } from './components/EmailDetail';
 import { SettingsDialog } from './components/SettingsDialog';
 import { ProcessConfirmDialog } from './components/ProcessConfirmDialog';
 import { ManualOverrideDialog } from './components/ManualOverrideDialog';
 import { AutomationStatusBanner } from './components/AutomationStatusBanner';
 import { QuickAutomationToggle } from './components/QuickAutomationToggle';
 import { QuickDepartmentsButton } from './components/QuickDepartmentsButton';
-import { Email, AppSettings } from './types/email';
+import { mockEmails } from './data/mockEmails';
+import { Email, AppSettings, Department } from './types/email';
 import { apiService } from './services/api';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
-import { Mail, Moon, Sun, RefreshCw, Zap, PlayCircle } from 'lucide-react';
-import { toast, Toaster } from 'sonner';
+import { Mail, Moon, Sun, RefreshCw, Zap } from 'lucide-react';
+import { toast, Toaster } from 'sonner@2.0.3';
 import { useTranslation } from './hooks/useTranslation';
 
 export default function App() {
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(emails[0]?.id || null);
   const [selectedEmailIds, setSelectedEmailIds] = useState<string[]>([]);
-  const [emailDetailModalOpen, setEmailDetailModalOpen] = useState(false);
-  const [emailToView, setEmailToView] = useState<Email | null>(null);
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
   const [emailToProcess, setEmailToProcess] = useState<Email | null>(null);
@@ -63,6 +61,7 @@ export default function App() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   
   const { t } = useTranslation(settings.language);
+  const selectedEmail = emails.find(e => e.id === selectedEmailId);
   
   // Load settings from backend on mount (single source of truth)
   useEffect(() => {
@@ -242,47 +241,6 @@ export default function App() {
     setEmailToProcess(emailsToProc[0]);
     setEmailsToProcess(emailsToProc);
     setProcessDialogOpen(true);
-  };
-
-  const handleProcessAll = async () => {
-    const unprocessedEmails = emails.filter(e => e.status === 'not_processed');
-    if (unprocessedEmails.length === 0) {
-      toast.info('No emails to process', {
-        description: 'All emails have already been processed',
-        duration: 3000
-      });
-      return;
-    }
-
-    const loadingToast = toast.loading(`🤖 Processing ${unprocessedEmails.length} emails...`);
-    
-    try {
-      for (const email of unprocessedEmails) {
-        await handleProcess(email.id);
-        // Small delay to avoid overwhelming the server
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      toast.dismiss(loadingToast);
-      toast.success(`✅ Processed ${unprocessedEmails.length} emails`, {
-        duration: 3000
-      });
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error('Error processing emails', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-        duration: 5000
-      });
-    }
-  };
-
-  const handleEmailClick = (email: Email) => {
-    setEmailToView(email);
-    setEmailDetailModalOpen(true);
-  };
-
-  const handleProcessEmail = (email: Email) => {
-    handleProcess(email.id);
   };
 
   const handleToggleEmailSelection = (emailId: string) => {
@@ -578,23 +536,16 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCheckMail}
-            className="gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            📬 {t('checkMail')}
-          </Button>
-          <Button
-            variant="default"
-            onClick={handleProcessAll}
-            className="gap-2"
-            disabled={emails.filter(e => e.status === 'not_processed').length === 0}
-          >
-            <PlayCircle className="w-4 h-4" />
-            Process All
-          </Button>
+          {!settings.automaticRouting.enabled && (
+            <Button
+              variant="outline"
+              onClick={handleCheckMail}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              📬 {t('checkMail')}
+            </Button>
+          )}
           <QuickDepartmentsButton 
             departments={settings.departments} 
             language={settings.language}
@@ -631,45 +582,44 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col p-4 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-        {/* Dashboard */}
-        <Dashboard 
-          toProcessEmails={emails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error')}
-          processedEmails={emails.filter(e => e.status === 'forwarded' || e.status === 'cancelled')}
-        />
-        
-        {/* Two Columns: To Process | Processed */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* To Process Column */}
-          <CompactEmailList
-            emails={emails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error')}
-            title="To Process"
-            onEmailClick={handleEmailClick}
-            onProcess={handleProcessEmail}
-            showProcessButton={true}
-            departments={settings.departments}
-          />
-          
-          {/* Processed Column */}
-          <CompactEmailList
-            emails={emails.filter(e => e.status === 'forwarded' || e.status === 'cancelled')}
-            title="Processed"
-            onEmailClick={handleEmailClick}
-            departments={settings.departments}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden">
+          <EmailList
+            emails={emails}
+            selectedEmailId={selectedEmailId}
+            selectedEmailIds={selectedEmailIds}
+            onSelectEmail={setSelectedEmailId}
+            onToggleEmailSelection={handleToggleEmailSelection}
+            onSelectAll={handleSelectAll}
+            onClearSelection={handleClearSelection}
+            onProcessSelected={handleProcessSelected}
+            language={settings.language}
           />
         </div>
-      </div>
 
-      {/* Email Detail Modal */}
-      <EmailDetailModal
-        email={emailToView}
-        isOpen={emailDetailModalOpen}
-        onClose={() => {
-          setEmailDetailModalOpen(false);
-          setEmailToView(null);
-        }}
-        onProcess={emailToView?.status === 'not_processed' ? handleProcessEmail : undefined}
-      />
+        {/* Detail Panel */}
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+          {selectedEmail ? (
+            <EmailDetail
+              email={selectedEmail}
+              departments={settings.departments}
+              automaticMode={settings.automaticRouting.enabled}
+              onProcess={handleProcess}
+              onRemove={handleRemove}
+              onDepartmentOverride={handleDepartmentOverride}
+              language={settings.language}
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <Mail className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                <p>{t('selectEmail')}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Process Confirmation Dialog */}
       <ProcessConfirmDialog
