@@ -1,219 +1,302 @@
-# 🎫 Automated Mail Support System
+# 🎨 Automated Mail Support System with Modern UI
 
-> **AI-Powered Ticket Management System** with intelligent department routing and automated email processing
+> **AI-Powered Email Support System** with React/TypeScript UI and Python Backend
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Private-red.svg)](LICENSE)
-[![Groq](https://img.shields.io/badge/AI-Groq-orange.svg)](https://groq.com)
-[![Ollama](https://img.shields.io/badge/AI-Ollama-green.svg)](https://ollama.com)
+[![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 
-Transform your email support workflow with AI-powered automation. This system automatically fetches, analyzes, and routes support tickets to the right departments using state-of-the-art language models.
+Modern web interface built with **React + TypeScript** connected to a powerful **Python backend** for intelligent email routing with AI.
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
-🤖 **Smart AI Analysis** - Leverages Groq or Ollama models for intelligent ticket understanding  
-📎 **PDF Extraction** - Automatically extracts text from PDF attachments  
-🎯 **Intelligent Routing** - Routes tickets to the correct department based on content  
-🖥️ **Beautiful GUI** - User-friendly Tkinter interface with real-time preview  
-🔧 **Modular Design** - Easily extendable architecture  
-⚙️ **Flexible Models** - Choose between cloud (Groq) or local (Ollama) AI models  
-📧 **Multi-Provider** - Works with Gmail, Outlook, and other email providers
+🎨 **Modern React UI** - Beautiful interface designed with Figma, built with React and TypeScript  
+🤖 **AI-Powered Analysis** - Ollama integration for intelligent department routing  
+📧 **Real Email Processing** - IMAP/SMTP integration for Gmail, Outlook, and more  
+⚡ **Dual Mode Operation** - Manual review or fully automatic processing  
+🔐 **Secure Configuration** - Environment-based settings management  
+🌍 **Multi-language Support** - English and Italian translations  
+📊 **Real-time Updates** - Live email status and processing feedback  
+
+---
 
 ## 📸 Interface Preview
 
-![GUI Example](gui_example.png)
+![Dashboard UI 2.0](ui.png)
 
-*Clean and intuitive interface for managing support tickets*
+*Modern dashboard with real-time analytics, dual-column email view, and AI-powered classification*
 
 ---
 
-## � Quick Start
+## 🏗️ Architecture
 
-Get up and running in 5 minutes!
+```
+┌─────────────────────────────────────┐
+│     React Frontend (Port 5173)     │
+│  ┌──────────────────────────────┐  │
+│  │  TypeScript Components       │  │
+│  │  - Email List & Detail       │  │
+│  │  - Settings Management       │  │
+│  │  - Department Config         │  │
+│  └──────────────────────────────┘  │
+│              ↓ REST API             │
+└─────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────┐
+│     Flask Backend (Port 5000)      │
+│  ┌──────────────────────────────┐  │
+│  │  Python Modules              │  │
+│  │  - Mail Fetcher (IMAP)       │  │
+│  │  - Mail Sender (SMTP)        │  │
+│  │  - AI Processor (Ollama)     │  │
+│  └──────────────────────────────┘  │
+└─────────────────────────────────────┘
+```
 
-### 1️⃣ Setup Environment
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python 3.8+** with pip
+- **Node.js 16+** with npm
+- **Git**
+- **Email account** (Gmail recommended with App Password)
+- **Ollama** installed locally (https://ollama.com)
+
+### 1. Clone Repository
 
 ```bash
-# Clone or download the repository
-cd "Automated Mail Support System"
+git clone https://github.com/Gaia-Cecchi/Automated-Mail-Support-System-with-UI.git
+cd Automated-Mail-Support-System-with-UI
+```
 
+### 2. Setup Backend
+
+```bash
 # Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+python -m venv venv
 
-# Install dependencies
-pip install python-dotenv pdfplumber requests
-```
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
 
-### 2️⃣ Configure Email Account
-
-> ⚠️ **IMPORTANT**: Gmail requires an **App Password**, not your regular password!
-
-📖 **Complete Setup Guide**: [GMAIL_SETUP.md](GMAIL_SETUP.md)
-
-**Quick Gmail Configuration**:
-- **IMAP**: `imap.gmail.com`
-- **SMTP**: `smtp.gmail.com`
-- **Password**: Generate an App Password from [Google Account Settings](https://myaccount.google.com/apppasswords)
-
-### 3️⃣ Choose Your AI Provider
-
-#### 🌐 Option A: Groq (Recommended - Cloud-based, Free Tier)
-
-```bash
-# 1. Get your API key from: https://console.groq.com
-# 2. Enter it in the GUI along with your chosen model
-```
-
-**Available Models**:
-- `llama-3.1-8b-instant` ⚡ (default - fastest)
-- `llama-3.1-70b-versatile` 🎯 (most accurate)
-- `mixtral-8x7b-32768` 📚 (long context)
-- `gemma2-9b-it` 💡 (efficient)
-
-#### 💻 Option B: Ollama (Local - Complete Privacy)
-
-```bash
-# 1. Install Ollama from: https://ollama.com
-# 2. Pull a model
-ollama pull llama3.1
-
-# 3. Configure in GUI:
-#    - URL: http://localhost:11434/v1
-#    - Model: llama3.1
-```
-
-**Popular Models**: `llama3.1`, `llama3.2`, `mistral`, `phi3`, `qwen2.5`
-
-### 4️⃣ Launch the Application
-
-```bash
-python gui/app_gui_v2.py
-```
-
-🎉 **That's it!** The GUI will open and you're ready to start processing tickets.
-
----
-
-## � How It Works
-
-```mermaid
-graph LR
-    A[📧 Incoming Email] --> B[🔍 Fetch via IMAP]
-    B --> C[📄 Extract PDF Text]
-    C --> D[🤖 AI Analysis]
-    D --> E[🎯 Department Routing]
-    E --> F[✉️ Forward via SMTP]
-```
-
-1. **📧 Configure** - Set up email credentials and AI provider
-2. **🏢 Add Departments** - Define departments with names, descriptions, and emails
-3. **🔍 Check Mail** - Fetch unread emails from inbox
-4. **🤖 AI Analysis** - Let AI analyze content and suggest the best department
-5. **✅ Confirm & Send** - Review and forward to the appropriate department
-
----
-
-## 📧 Email Provider Setup
-
-### Gmail Users (Most Common)
-
-> ⚠️ **Critical**: Gmail requires an **App Password**, not your regular password!
-
-**Quick Steps**:
-1. Enable [2-Step Verification](https://myaccount.google.com/security)
-2. Generate [App Password](https://myaccount.google.com/apppasswords)
-3. Use the 16-character App Password in the application
-
-📖 **Detailed Guide**: See [GMAIL_SETUP.md](GMAIL_SETUP.md) for screenshots and troubleshooting
-
-### Other Providers
-
-- **Outlook/Hotmail**: IMAP: `outlook.office365.com`, SMTP: `smtp.office365.com`
-- **Yahoo**: May require App Password like Gmail
-- **Custom SMTP/IMAP**: Enter your provider's settings
-
----
-
-## 🤖 AI Models Comparison
-
-| Provider | Model | Speed | Accuracy | Context | Best For |
-|----------|-------|-------|----------|---------|----------|
-| **Groq** | llama-3.1-8b-instant | ⚡⚡⚡ | ⭐⭐⭐ | 8K | Quick routing |
-| **Groq** | llama-3.1-70b-versatile | ⚡⚡ | ⭐⭐⭐⭐⭐ | 32K | Complex analysis |
-| **Groq** | mixtral-8x7b-32768 | ⚡⚡ | ⭐⭐⭐⭐ | 32K | Long documents |
-| **Ollama** | llama3.1 (local) | ⚡ | ⭐⭐⭐⭐ | 128K | Privacy-first |
-
-💡 **Recommendation**: Start with `llama-3.1-8b-instant` for best speed/accuracy balance.
-
----
-
-## 📁 Project Structure
-
-```
-📦 Automated Mail Support System
-├── 🖥️ gui/
-│   ├── app_gui_v2.py              # Main GUI application
-│   ├── config_manager.py          # Configuration handler
-│   └── reparti_config.json        # Department definitions
-├── 🔧 modules/
-│   ├── ticket_processor_simple.py # AI ticket analysis
-│   ├── mail_fetcher.py            # IMAP email retrieval
-│   ├── mail_sender.py             # SMTP email sending
-│   ├── process_mail.py            # Email & PDF parsing
-│   ├── redirect_engine.py         # Geographic routing
-│   └── azure_maps_full.py         # Geolocation services
-├── 📚 tests/                      # Testing utilities
-├── 📖 README.md                   # This file
-├── 📖 GMAIL_SETUP.md              # Gmail configuration guide
-├── ⚙️ requirements.txt            # Python dependencies
-└── 🔒 .env.example                # Configuration template
-```
-
-## 🔧 Core Modules
-
-| Module | Purpose |
-|--------|---------|
-| `ticket_processor_simple` | AI-powered ticket analysis without Langchain dependency |
-| `mail_fetcher` | IMAP email retrieval with attachment handling |
-| `mail_sender` | SMTP email forwarding with PDF attachments |
-| `process_mail` | Email body and PDF text extraction |
-| `redirect_engine` | Geographic-based routing (for automated loop) |
-| `azure_maps_full` | Location geocoding using Azure Maps API |
-
----
-
-## 🛠️ Advanced Usage
-
-### Automated Mode (Geographic Routing)
-
-For advanced users who need geographic-based routing to 3 areas (North/Center/South):
-
-```bash
-# Install additional dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
-# Configure Azure Maps API key in .env
-# Run automated loop
-python main_loop_v2.py
+# Install backend dependencies
+cd backend
+pip install flask flask-cors
+
+# Configure environment variables
+cp env.example .env
+# Edit .env with your credentials (email, Ollama settings, etc.)
 ```
 
-This mode requires:
-- Langchain packages
-- Azure Maps API key
-- Geographic database setup
+### 3. Setup Frontend
+
+```bash
+# Navigate to frontend directory
+cd figmamake
+
+# Install Node dependencies
+npm install
+
+# Create environment file
+echo "VITE_API_URL=http://localhost:5000/api" > .env
+```
+
+### 4. Run the Application
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+python api.py
+```
+Backend will start on **http://localhost:5000**
+
+**Terminal 2 - Frontend:**
+```bash
+cd figmamake
+npm run dev
+```
+Frontend will start on **http://localhost:5173**
+
+### 5. Configure & Use
+
+1. Open browser at **http://localhost:5173**
+2. Click ⚙️ **Settings** in top right
+3. Configure:
+   - **Email tab**: Email credentials (use App Password for Gmail)
+   - **AI Provider tab**: Ollama URL and model settings
+   - **Departments tab**: Add/edit departments for routing
+4. Click **📬 Check Mail** to fetch emails
+5. Select email → **🔄 Process** → Review AI suggestion → Confirm send
+
+---
+
+## 📋 Configuration
+
+### Email Setup (Gmail Example)
+
+For Gmail, you **must** use an App Password:
+
+1. Enable 2-Step Verification: https://myaccount.google.com/security
+2. Generate App Password: https://myaccount.google.com/apppasswords
+3. Use the 16-character password in settings
+
+Settings example:
+```
+Email: your-email@gmail.com
+Password: xxxx xxxx xxxx xxxx  (App Password)
+IMAP: imap.gmail.com
+SMTP: smtp.gmail.com
+```
+
+### AI Provider Setup
+
+**Ollama (Local AI)**
+- Install from: https://ollama.com
+- Pull recommended model: `ollama pull gemma3:4b`
+- Verify installation: `ollama list`
+- URL in settings: `http://localhost:11434/v1`
+- Model in settings: `gemma3:4b` (or any installed model)
+
+---
+
+## 🔧 Project Structure
+
+```
+├── backend/                   # Flask REST API
+│   ├── api.py                # Main API server
+│   └── requirements.txt      # Backend dependencies
+│
+├── figmamake/                # React Frontend
+│   ├── src/
+│   │   ├── components/       # React components
+│   │   ├── services/         # API client
+│   │   ├── types/            # TypeScript types
+│   │   └── App.tsx           # Main app component
+│   └── package.json          # Frontend dependencies
+│
+├── modules/                  # Python core modules
+│   ├── mail_fetcher.py       # IMAP email retrieval
+│   ├── mail_sender.py        # SMTP email sending
+│   ├── ticket_processor_simple.py  # AI analysis
+│   └── process_mail.py       # PDF extraction
+│
+├── SETUP.md                  # Detailed setup guide
+├── INTEGRATION_GUIDE.md      # Integration documentation
+└── env.example               # Environment template
+```
+
+---
+
+## 🎯 Usage Modes
+
+### Manual Mode (Default)
+1. User clicks **Check Mail** → Emails fetched from IMAP
+2. User selects email → Clicks **Process** → AI analyzes
+3. System shows AI suggestion with confidence score
+4. User confirms → Email forwarded via SMTP
+
+### Automatic Mode
+1. Toggle **⚡ Automatic Routing** in header
+2. System checks emails every N minutes (configurable)
+3. AI processes and forwards automatically
+4. Real-time notifications for each action
+
+---
+
+## 🛠️ API Endpoints
+
+### Email Operations
+- `POST /api/emails/check` - Fetch new unread emails
+- `POST /api/emails/process` - Analyze email with AI
+- `POST /api/emails/forward` - Forward email to department
+
+### Configuration
+- `GET /api/settings` - Get system settings
+- `POST /api/settings` - Save system settings
+
+### Departments
+- `GET /api/departments` - List all departments
+- `POST /api/departments` - Add new department
+- `DELETE /api/departments/:nome` - Remove department
+
+### Automation
+- `POST /api/automation/start` - Start automatic processing
+- `POST /api/automation/stop` - Stop automatic processing
+- `GET /api/automation/status` - Get automation status
+
+---
+
+## 🔐 Security Notes
+
+- ⚠️ Never commit `.env` files or credentials
+- ✅ Use App Passwords for Gmail (not regular password)
+- ✅ Keep API keys in environment variables
+- ✅ For production: implement JWT authentication
+- ✅ Use HTTPS in production
+
+Files excluded from git (in `.gitignore`):
+- `.env` files
+- `node_modules/`
+- `venv/`
+- Config files with credentials
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend won't start
+```bash
+# Ensure Flask is installed in virtual environment
+pip install flask flask-cors
+```
+
+### Frontend can't connect to backend
+- Check backend is running on port 5000
+- Verify `figmamake/.env` has: `VITE_API_URL=http://localhost:5000/api`
+- Check browser console (F12) for CORS errors
+
+### Gmail authentication fails
+- Use App Password, not regular password
+- See `GMAIL_SETUP.md` for detailed instructions
+
+### AI analysis fails
+- Install and run Ollama locally: `ollama serve`
+- Verify model is installed: `ollama list`
+- Pull a model if needed: `ollama pull gemma3:4b`
+- Check Settings → AI Provider for correct URL and model
+- Check backend console for error messages
+
+---
+
+## 📚 Documentation
+
+- **[SETUP.md](SETUP.md)** - Detailed setup instructions and commands
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Technical integration details
+- **[GMAIL_SETUP.md](GMAIL_SETUP.md)** - Gmail configuration guide
 
 ---
 
 ## 🤝 Contributing
 
-This is a private project. If you have suggestions or find issues, please contact the repository owner.
+This is a personal project, but suggestions are welcome! Feel free to:
+- Open issues for bugs or feature requests
+- Submit pull requests with improvements
+- Share your use case or feedback
 
 ---
 
-## 📝 License
+## 📄 License
 
 **Private Project** - All rights reserved
 
@@ -221,17 +304,28 @@ This is a private project. If you have suggestions or find issues, please contac
 
 ## 🙏 Acknowledgments
 
-- **Groq** - For lightning-fast AI inference
-- **Ollama** - For local AI model support
-- **Python Community** - For excellent libraries
+- **Original Backend**: Based on [lordpba/Automated-Mail-Support-System](https://github.com/lordpba/Automated-Mail-Support-System)
+- **UI Framework**: React + Vite + TypeScript
+- **UI Components**: Shadcn/ui + Radix UI
+- **AI Provider**: Ollama for local inference
+- **Charts**: Recharts for data visualization
+- **Design Tool**: Figma Make
+
+---
+
+## 📞 Support
+
+For issues or questions:
+1. Check the [Documentation](#-documentation)
+2. Review [Troubleshooting](#-troubleshooting)
+3. Open an issue on GitHub
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for efficient support ticket management**
+**Built with ❤️ for efficient email support management**
 
-⭐ Star this repo if you find it useful!
+🌟 Star this repo if you find it useful!
 
 </div>
-```
