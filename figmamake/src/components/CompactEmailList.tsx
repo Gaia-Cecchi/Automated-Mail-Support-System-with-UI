@@ -14,6 +14,7 @@ interface CompactEmailListProps {
   onProcess?: (email: Email) => void;
   showProcessButton?: boolean;
   departments: Department[];
+  showDepartmentFilter?: boolean; // new prop to control filter type
 }
 
 export function CompactEmailList({ 
@@ -22,10 +23,12 @@ export function CompactEmailList({
   onEmailClick, 
   onProcess, 
   showProcessButton = false,
-  departments 
+  departments,
+  showDepartmentFilter = true // default to department filter
 }: CompactEmailListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [senderFilter, setSenderFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'confidence'>('date');
 
   // Get unique departments from emails
@@ -35,6 +38,11 @@ export function CompactEmailList({
       .filter(Boolean)
   ));
 
+  // Get unique senders from emails
+  const emailSenders = Array.from(new Set(
+    emails.map(e => e.sender.split('<')[0].trim()) // Extract name before email
+  )).sort();
+
   // Filter and sort emails
   const filteredEmails = emails
     .filter(email => {
@@ -43,12 +51,20 @@ export function CompactEmailList({
         email.sender.toLowerCase().includes(searchTerm.toLowerCase()) ||
         email.body.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesDepartment = 
-        departmentFilter === 'all' || 
-        email.forwardedToDepartment === departmentFilter ||
-        email.suggestedDepartment === departmentFilter;
+      // Filter by department or sender based on showDepartmentFilter prop
+      let matchesFilter = true;
+      if (showDepartmentFilter) {
+        matchesFilter = 
+          departmentFilter === 'all' || 
+          email.forwardedToDepartment === departmentFilter ||
+          email.suggestedDepartment === departmentFilter;
+      } else {
+        matchesFilter = 
+          senderFilter === 'all' ||
+          email.sender.includes(senderFilter);
+      }
       
-      return matchesSearch && matchesDepartment;
+      return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
       if (sortBy === 'date') {
@@ -82,17 +98,31 @@ export function CompactEmailList({
             className="w-full h-8"
           />
           <div className="flex gap-2">
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="flex-1 h-8 text-xs">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {emailDepartments.map(dept => (
-                  <SelectItem key={dept} value={dept || ''}>{dept}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {showDepartmentFilter ? (
+              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                <SelectTrigger className="flex-1 h-8 text-xs">
+                  <SelectValue placeholder="All Departments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Departments</SelectItem>
+                  {emailDepartments.map(dept => (
+                    <SelectItem key={dept} value={dept || ''}>{dept}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Select value={senderFilter} onValueChange={setSenderFilter}>
+                <SelectTrigger className="flex-1 h-8 text-xs">
+                  <SelectValue placeholder="All Senders" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Senders</SelectItem>
+                  {emailSenders.map(sender => (
+                    <SelectItem key={sender} value={sender}>{sender}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'confidence')}>
               <SelectTrigger className="flex-1 h-8 text-xs">

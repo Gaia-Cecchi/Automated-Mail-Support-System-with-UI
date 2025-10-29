@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { CompactEmailList } from './components/CompactEmailList';
 import { EmailDetailModal } from './components/EmailDetailModal';
+import { BatchReviewModal } from './components/BatchReviewModal';
 import { SettingsDialog } from './components/SettingsDialog';
 import { ProcessConfirmDialog } from './components/ProcessConfirmDialog';
 import { ManualOverrideDialog } from './components/ManualOverrideDialog';
 import { AutomationStatusBanner } from './components/AutomationStatusBanner';
 import { QuickAutomationToggle } from './components/QuickAutomationToggle';
 import { QuickDepartmentsButton } from './components/QuickDepartmentsButton';
-import { Email, AppSettings } from './types/email';
+import { Email, AppSettings, Department } from './types/email';
 import { apiService } from './services/api';
 import { Button } from './components/ui/button';
 import { Badge } from './components/ui/badge';
@@ -26,8 +27,26 @@ export default function App() {
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
   const [emailToProcess, setEmailToProcess] = useState<Email | null>(null);
   const [emailsToProcess, setEmailsToProcess] = useState<Email[]>([]);
+  const [batchReviewModalOpen, setBatchReviewModalOpen] = useState(false);
+  const [processedEmailsForReview, setProcessedEmailsForReview] = useState<any[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<string | undefined>(undefined);
+  
+  // Historical stats (all time)
+  const [historicalStats, setHistoricalStats] = useState<{
+    totalProcessed: number;
+    totalReceived: number;
+    byDepartment: Record<string, number>;
+    lastUpdated: string;
+  }>(() => {
+    const saved = localStorage.getItem('emailStats');
+    return saved ? JSON.parse(saved) : {
+      totalProcessed: 0,
+      totalReceived: 0,
+      byDepartment: {},
+      lastUpdated: new Date().toISOString()
+    };
+  });
   
   // Initialize with default settings (will be loaded from backend)
   const [settings, setSettings] = useState<AppSettings>({
@@ -63,6 +82,33 @@ export default function App() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   
   const { t } = useTranslation(settings.language);
+  
+  // Save historical stats to localStorage
+  useEffect(() => {
+    localStorage.setItem('emailStats', JSON.stringify(historicalStats));
+  }, [historicalStats]);
+  
+  // Update historical stats when email is forwarded
+  const updateHistoricalStats = (email: Email, department: string) => {
+    setHistoricalStats(prev => ({
+      ...prev,
+      totalProcessed: prev.totalProcessed + 1,
+      byDepartment: {
+        ...prev.byDepartment,
+        [department]: (prev.byDepartment[department] || 0) + 1
+      },
+      lastUpdated: new Date().toISOString()
+    }));
+  };
+  
+  // Update total received count when new emails arrive
+  const updateReceivedCount = (count: number) => {
+    setHistoricalStats(prev => ({
+      ...prev,
+      totalReceived: prev.totalReceived + count,
+      lastUpdated: new Date().toISOString()
+    }));
+  };
   
   // Load settings from backend on mount (single source of truth)
   useEffect(() => {
@@ -151,7 +197,7 @@ export default function App() {
           sender: email.sender,
           subject: email.subject,
           body: email.body,
-          timestamp: new Date(email.timestamp),
+          timestamp: email.timestamp, // Keep as string from backend
           attachments: email.attachments || [],
           status: 'not_processed' as const,
           aiSummary: '',
@@ -162,6 +208,9 @@ export default function App() {
         }));
         
         setEmails(prev => [...newEmails, ...prev]);
+        
+        // Update historical stats with new received emails
+        updateReceivedCount(newEmails.length);
         
         toast.success(t('emailChecked'), {
           description: `${t('foundNewEmails')}: ${result.count}`,
@@ -255,18 +304,66 @@ export default function App() {
     }
 
     const loadingToast = toast.loading(`🤖 Processing ${unprocessedEmails.length} emails...`);
+    const processedResults: any[] = [];
     
     try {
       for (const email of unprocessedEmails) {
-        await handleProcess(email.id);
+        try {
+          const result = await apiService.processEmail(email);
+          
+          console.log('🔍 API RESULT FOR EMAIL:', {
+            emailId: email.id,
+            subject: email.subject,
+            fullResult: result,
+            analysis: result.analysis,
+            confidence: result.analysis.confidence,
+            confidenceType: typeof result.analysis.confidence
+          });
+          
+          // Store processed email with AI analysis
+          processedResults.push({
+            ...email,
+            aiAnalysis: {
+              suggestedDepartment: result.analysis.reparto_suggerito,
+              confidence: result.analysis.confidence,
+              summary: result.analysis.summary || result.analysis.reasoning
+            }
+          });
+          
+          // Update email with AI analysis results
+          const updatedEmail = {
+            ...email,
+            suggestedDepartment: result.analysis.reparto_suggerito,
+            confidence: result.analysis.confidence,
+            status: 'processed' as const
+          };
+          
+          setEmails(prev =>
+            prev.map(e => (e.id === email.id ? updatedEmail : e))
+          );
+        } catch (error) {
+          console.error(`Error processing email ${email.id}:`, error);
+          // Continue processing other emails even if one fails
+        }
+        
         // Small delay to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       toast.dismiss(loadingToast);
-      toast.success(`✅ Processed ${unprocessedEmails.length} emails`, {
-        duration: 3000
-      });
+      
+      if (processedResults.length > 0) {
+        // Open batch review modal
+        setProcessedEmailsForReview(processedResults);
+        setBatchReviewModalOpen(true);
+        
+        toast.success(`✅ Processed ${processedResults.length} emails`, {
+          description: 'Review and approve to send',
+          duration: 3000
+        });
+      } else {
+        toast.error('No emails were successfully processed');
+      }
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error('Error processing emails', {
@@ -279,6 +376,69 @@ export default function App() {
   const handleEmailClick = (email: Email) => {
     setEmailToView(email);
     setEmailDetailModalOpen(true);
+  };
+
+  const handleBatchApproveAll = async (emailsToSend: Map<string, string>) => {
+    const loadingToast = toast.loading(`📤 Sending ${emailsToSend.size} emails...`);
+    
+    try {
+      let successCount = 0;
+      for (const [emailId, department] of emailsToSend.entries()) {
+        const email = emails.find(e => e.id === emailId);
+        if (!email) continue;
+        
+        const analysis = processedEmailsForReview.find((e: any) => e.id === emailId)?.aiAnalysis;
+        
+        await apiService.forwardEmail(
+          email,
+          department,
+          analysis ? {
+            reparto_suggerito: analysis.suggestedDepartment,
+            confidence: analysis.confidence,
+            summary: analysis.summary,
+            reasoning: analysis.summary
+          } : undefined
+        );
+        
+        // Update email status
+        setEmails(prev =>
+          prev.map(e =>
+            e.id === emailId
+              ? { ...e, status: 'forwarded' as const, forwardedToDepartment: department }
+              : e
+          )
+        );
+        
+        // Update historical stats
+        updateHistoricalStats(email, department);
+        
+        successCount++;
+      }
+      
+      toast.dismiss(loadingToast);
+      toast.success(`✅ Sent ${successCount} emails`, {
+        duration: 3000
+      });
+      
+      setBatchReviewModalOpen(false);
+      setProcessedEmailsForReview([]);
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error('Error sending emails', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+        duration: 5000
+      });
+    }
+  };
+
+  const handleBatchMarkAsUnprocessed = (emailIds: string[]) => {
+    setEmails(prev =>
+      prev.map(email =>
+        emailIds.includes(email.id)
+          ? { ...email, status: 'not_processed' as const, suggestedDepartment: undefined, confidence: 0 }
+          : email
+      )
+    );
   };
 
   const handleProcessEmail = (email: Email) => {
@@ -510,6 +670,36 @@ export default function App() {
     setSettings(prev => ({ ...prev, darkMode: !prev.darkMode }));
   };
 
+  const handleUpdateDepartments = async (updatedDepartments: Department[]) => {
+    try {
+      const loadingToast = toast.loading('💾 Updating departments...');
+      
+      const newSettings = {
+        ...settings,
+        departments: updatedDepartments
+      };
+      
+      // Save to backend
+      await apiService.saveSettings(newSettings);
+      
+      toast.dismiss(loadingToast);
+      
+      // Update local state
+      setSettings(newSettings);
+      
+      toast.success('Departments updated successfully', {
+        description: 'Changes have been saved',
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Error updating departments:', error);
+      toast.error('Error updating departments', {
+        description: error instanceof Error ? error.message : 'Failed to update departments',
+        duration: 5000
+      });
+    }
+  };
+
   const toggleAutomaticRouting = () => {
     setSettings(prev => ({
       ...prev,
@@ -598,6 +788,7 @@ export default function App() {
           <QuickDepartmentsButton 
             departments={settings.departments} 
             language={settings.language}
+            onUpdateDepartments={handleUpdateDepartments}
           />
           <QuickAutomationToggle
             enabled={settings.automaticRouting.enabled}
@@ -636,6 +827,7 @@ export default function App() {
         <Dashboard 
           toProcessEmails={emails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error')}
           processedEmails={emails.filter(e => e.status === 'forwarded' || e.status === 'cancelled')}
+          historicalStats={historicalStats}
         />
         
         {/* Two Columns: To Process | Processed */}
@@ -648,6 +840,7 @@ export default function App() {
             onProcess={handleProcessEmail}
             showProcessButton={true}
             departments={settings.departments}
+            showDepartmentFilter={false}
           />
           
           {/* Processed Column */}
@@ -656,6 +849,7 @@ export default function App() {
             title="Processed"
             onEmailClick={handleEmailClick}
             departments={settings.departments}
+            showDepartmentFilter={true}
           />
         </div>
       </div>
@@ -669,6 +863,20 @@ export default function App() {
           setEmailToView(null);
         }}
         onProcess={emailToView?.status === 'not_processed' ? handleProcessEmail : undefined}
+      />
+
+      {/* Batch Review Modal */}
+      <BatchReviewModal
+        isOpen={batchReviewModalOpen}
+        onClose={() => {
+          setBatchReviewModalOpen(false);
+          setProcessedEmailsForReview([]);
+        }}
+        processedEmails={processedEmailsForReview}
+        departments={settings.departments}
+        onApproveAll={handleBatchApproveAll}
+        onMarkAsUnprocessed={handleBatchMarkAsUnprocessed}
+        onOpenEmailDetail={handleEmailClick}
       />
 
       {/* Process Confirmation Dialog */}

@@ -128,7 +128,7 @@ export const translations = {
     
     // Toasts
     emailChecked: "Email checked",
-    foundNewEmails: "Found 1 new unread email",
+    foundNewEmails: "Found new unread emails",
     emailForwarded: "Email forwarded successfully",
     emailsForwarded: "emails forwarded successfully",
     emailsProcessedSuccessfully: "All emails processed successfully",
@@ -298,7 +298,7 @@ export const translations = {
     
     // Toasts
     emailChecked: "Email controllata",
-    foundNewEmails: "Trovata 1 nuova email non letta",
+    foundNewEmails: "Trovate nuove email non lette",
     emailForwarded: "Email inoltrata con successo",
     emailsForwarded: "email inoltrate con successo",
     emailsProcessedSuccessfully: "Tutte le email processate con successo",
