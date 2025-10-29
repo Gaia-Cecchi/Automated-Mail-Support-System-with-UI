@@ -1,25 +1,445 @@
-# 🎨 Automated Mail Support System with Modern UI
+# 📧 Automated Mail Support System (SAAM)
 
-> **AI-Powered Email Support System** with React/TypeScript UI and Python Backend
+> **AI-Powered Email Classification & Routing System** with React UI and Python Backend
 
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 
-Modern web interface built with **React + TypeScript** connected to a powerful **Python backend** for intelligent email routing with AI.
+**SAAM** (Sistema Automatico per la gestione della posta di Assistenza e Manutenzione) è un sistema intelligente che analizza automaticamente le email in arrivo, le classifica utilizzando AI locale (Ollama), e le inoltra al dipartimento competente.
 
 ---
 
-## ✨ Features
+## ✨ Funzionalità Principali
 
-🎨 **Modern React UI** - Beautiful interface designed with Figma, built with React and TypeScript  
-🤖 **AI-Powered Analysis** - Ollama integration for intelligent department routing  
-📧 **Real Email Processing** - IMAP/SMTP integration for Gmail, Outlook, and more  
-⚡ **Dual Mode Operation** - Manual review or fully automatic processing  
-🔐 **Secure Configuration** - Environment-based settings management  
-🌍 **Multi-language Support** - English and Italian translations  
-📊 **Real-time Updates** - Live email status and processing feedback  
+🤖 **AI Locale con Ollama** - Classificazione intelligente senza servizi cloud  
+📊 **Dashboard con Statistiche** - Visualizzazione real-time e storico completo  
+📧 **Integrazione Email IMAP/SMTP** - Funziona con Gmail, Outlook e altri provider  
+⚡ **Modalità Automatica** - Controllo e processamento periodico senza intervento  
+🔄 **Modalità Manuale** - Revisione e override delle decisioni AI  
+💾 **Persistenza Dati** - Storico email e statistiche salvate automaticamente  
+🌐 **Multilingua** - Supporto Italiano/Inglese  
+🎨 **UI Moderna** - Interfaccia responsive con tema scuro/chiaro  
+
+---
+
+## 📸 Screenshot
+
+![SAAM Dashboard](ui.png)
+
+*Dashboard principale con statistiche giornaliere, storico all-time, email da processare e già processate*
+
+---
+
+## 🏗️ Architettura
+
+```
+┌──────────────────────────────────────────┐
+│  Frontend React (Port 3000)              │
+│  ┌────────────────────────────────────┐  │
+│  │ • Dashboard con grafici            │  │
+│  │ • Lista email To Process/Processed │  │
+│  │ • Configurazione dipartimenti      │  │
+│  │ • Impostazioni AI e automazione    │  │
+│  └────────────────────────────────────┘  │
+│            ↓ Vite Proxy + REST API       │
+└──────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────┐
+│  Backend Flask (Port 5000)               │
+│  ┌────────────────────────────────────┐  │
+│  │ • Email Fetcher (IMAP)             │  │
+│  │ • Email Sender (SMTP)              │  │
+│  │ • AI Processor (Ollama)            │  │
+│  │ • Stats Manager (JSON persistence) │  │
+│  │ • Email Storage (JSON persistence) │  │
+│  └────────────────────────────────────┘  │
+└──────────────────────────────────────────┘
+                    ↓
+┌──────────────────────────────────────────┐
+│  Ollama (Port 11434)                     │
+│  • Gemma3:4b (default) o altri modelli   │
+│  • Analisi locale senza cloud            │
+└──────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 Installazione Rapida
+
+### Prerequisiti
+
+- **Python 3.12+** installato
+- **Node.js 18+** e npm installati
+- **Git** installato
+- **Account email** (Gmail consigliato con App Password)
+- **Ollama** installato (https://ollama.com)
+
+### 1️⃣ Clona il Repository
+
+```powershell
+git clone https://github.com/Gaia-Cecchi/Automated-Mail-Support-System-with-UI.git
+cd "Automated Mail Support System\code"
+```
+
+### 2️⃣ Setup Backend Python
+
+```powershell
+# Crea virtual environment
+python -m venv venv
+
+# Attiva virtual environment
+.\venv\Scripts\Activate.ps1
+
+# Installa dipendenze
+pip install -r requirements.txt
+```
+
+### 3️⃣ Setup Frontend React
+
+```powershell
+cd figmamake
+npm install
+cd ..
+```
+
+### 4️⃣ Installa e Configura Ollama
+
+```powershell
+# Scarica Ollama da https://ollama.com e installalo
+
+# Verifica installazione
+ollama list
+
+# Scarica modello consigliato (circa 2.5GB)
+ollama pull gemma3:4b
+
+# Avvia Ollama (se non già avviato)
+ollama serve
+```
+
+### 5️⃣ Avvia il Sistema
+
+**Terminal 1 - Backend:**
+```powershell
+cd "path\to\Automated Mail Support System\code"
+.\venv\Scripts\Activate.ps1
+python backend\api.py
+```
+✅ Backend attivo su **http://localhost:5000**
+
+**Terminal 2 - Frontend:**
+```powershell
+cd "path\to\Automated Mail Support System\code\figmamake"
+npm run dev
+```
+✅ Frontend attivo su **http://localhost:3000**
+
+**Terminal 3 - Ollama:**
+```powershell
+ollama serve
+```
+✅ Ollama attivo su **http://localhost:11434**
+
+---
+
+## ⚙️ Configurazione Iniziale
+
+### 1. Accedi all'Interfaccia
+
+Apri il browser su **http://localhost:3000**
+
+### 2. Configura Email (Tab Settings → Email)
+
+**Per Gmail:**
+1. Abilita 2-Step Verification: https://myaccount.google.com/security
+2. Genera App Password: https://myaccount.google.com/apppasswords
+3. Inserisci nella configurazione:
+   ```
+   Email: tua-email@gmail.com
+   Password: xxxx xxxx xxxx xxxx  (16 caratteri App Password)
+   IMAP Server: imap.gmail.com
+   SMTP Server: smtp.gmail.com
+   ```
+
+**Per altri provider:**
+- Outlook: `outlook.office365.com` (IMAP e SMTP)
+- Yahoo: `imap.mail.yahoo.com` e `smtp.mail.yahoo.com`
+
+### 3. Configura AI Provider (Tab Settings → AI Provider)
+
+```
+Provider: Ollama
+URL: http://localhost:11434/v1
+Model: gemma3:4b
+```
+
+### 4. Configura Dipartimenti (Tab Settings → Departments)
+
+Aggiungi i dipartimenti della tua organizzazione, ad esempio:
+- **Technical Support** - supporto@azienda.it
+- **Sales** - vendite@azienda.it  
+- **Administration** - amministrazione@azienda.it
+
+### 5. Salva Configurazione
+
+Clicca **💾 Save Settings** - la configurazione verrà salvata in `config_api.json`
+
+---
+
+## 📖 Come Usare SAAM
+
+### Modalità Manuale (Default)
+
+1. **Controlla Email**: Clicca **📬 Check Mail** per scaricare nuove email
+2. **Visualizza Email**: Le email appaiono nella colonna "To Process"
+3. **Analizza Email**: Clicca su un'email → **🔄 Process** → l'AI la analizza
+4. **Revisiona Suggerimento**: Controlla dipartimento suggerito e confidence score
+5. **Conferma o Modifica**: Conferma il dipartimento o scegliene un altro
+6. **Inoltra**: Clicca **✉️ Forward** → l'email viene inoltrata
+
+### Modalità Automatica
+
+1. **Attiva Automazione**: Toggle **⚡ Automatic Routing** nell'header
+2. **Configura Intervallo**: Settings → Automation → Check Every (minuti)
+3. **Il sistema**:
+   - Controlla nuove email ogni N minuti
+   - Le analizza automaticamente con AI
+   - Le inoltra al dipartimento suggerito (se confidence > soglia)
+   - Mostra notifiche per ogni operazione
+
+### Dashboard e Statistiche
+
+**� Received Today**: Statistiche delle email ricevute oggi
+- Total: Totale email ricevute
+- Forwarded: Email inoltrate
+- Confidence: Confidence media AI
+- To Process: Email ancora da processare
+
+**📊 All Time**: Statistiche storiche persistenti
+- Dati salvati in `email_stats.json`
+- Non si azzerano al riavvio
+
+**Grafici**:
+- **Distribution by Department**: Distribuzione email per dipartimento
+- **Confidence by Department**: Accuracy AI per dipartimento
+
+---
+
+## 📁 Struttura File e Persistenza
+
+```
+code/
+├── backend/
+│   ├── api.py                      # Server Flask
+│   ├── modules/
+│   │   ├── mail_fetcher.py         # Download email IMAP
+│   │   ├── mail_sender.py          # Invio email SMTP
+│   │   ├── ticket_processor_simple.py  # Analisi AI
+│   │   ├── stats_manager.py        # Gestione statistiche
+│   │   └── email_storage.py        # Persistenza email
+│
+├── figmamake/                      # Frontend React
+│   ├── src/
+│   │   ├── components/             # Componenti UI
+│   │   ├── services/api.ts         # Client API
+│   │   └── App.tsx                 # App principale
+│   └── vite.config.ts              # Config Vite con proxy
+│
+├── config_api.json                 # ⚠️ Configurazione (non committare!)
+├── reparti_api.json                # Dipartimenti
+├── email_stats.json                # Statistiche storiche
+├── emails.json                     # Email salvate (processate + non)
+└── STARTUP.md                      # Guida avvio rapido
+```
+
+### File di Configurazione (NON committare)
+
+- `config_api.json` - Credenziali email e impostazioni AI
+- `reparti_api.json` - Lista dipartimenti
+- Sono esclusi da Git per sicurezza
+
+### File di Persistenza
+
+- `email_stats.json` - Statistiche all-time (totalProcessed, byDepartment, confidence)
+- `emails.json` - Tutte le email scaricate (processate e non)
+- Salvati automaticamente, caricati all'avvio
+
+---
+
+## 🔧 API Endpoints
+
+### Email Operations
+- `POST /api/emails/check` - Scarica nuove email da IMAP
+- `POST /api/emails/process` - Analizza email con AI
+- `POST /api/emails/forward` - Inoltra email a dipartimento
+- `GET /api/emails/storage` - Recupera email salvate
+- `POST /api/emails/storage` - Salva array email
+- `DELETE /api/emails/storage/:id` - Elimina email
+
+### Statistics
+- `GET /api/stats` - Recupera statistiche storiche
+- `POST /api/stats/received` - Incrementa counter email ricevute
+- `POST /api/stats/processed` - Incrementa counter email processate (con confidence)
+
+### Configuration
+- `GET /api/settings` - Recupera impostazioni sistema
+- `POST /api/settings` - Salva impostazioni sistema
+- `GET /api/departments` - Lista dipartimenti
+- `POST /api/departments` - Aggiungi dipartimento
+
+### Automation
+- `POST /api/automation/start` - Avvia processamento automatico
+- `POST /api/automation/stop` - Ferma processamento automatico
+- `GET /api/automation/status` - Status automazione
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend non si avvia
+
+```powershell
+# Verifica virtual environment attivo (vedi "(venv)" nel prompt)
+.\venv\Scripts\Activate.ps1
+
+# Reinstalla dipendenze
+pip install -r requirements.txt
+
+# Verifica porta 5000 libera
+netstat -ano | findstr :5000
+```
+
+### Frontend non si connette al Backend
+
+```powershell
+# Verifica backend in esecuzione
+# Dovrebbe rispondere su http://localhost:5000/api/settings
+
+# Verifica vite.config.ts contiene proxy:
+#   server: {
+#     proxy: {
+#       '/api': 'http://localhost:5000'
+#     }
+#   }
+
+# Riavvia frontend
+cd figmamake
+npm run dev
+```
+
+### Errore Autenticazione Email Gmail
+
+- ✅ Usa **App Password**, non la password normale
+- ✅ Verifica 2-Step Verification abilitata
+- ✅ Genera nuova App Password se necessario
+- ❌ Non usare password account Google diretta
+
+### AI non funziona / Ollama non risponde
+
+```powershell
+# Verifica Ollama installato
+ollama --version
+
+# Verifica Ollama in esecuzione
+ollama list
+
+# Avvia Ollama se non attivo
+ollama serve
+
+# Verifica modello scaricato
+ollama list
+# Se gemma3:4b non c'è:
+ollama pull gemma3:4b
+
+# Testa Ollama
+ollama run gemma3:4b "Hello"
+```
+
+### Notifiche coprono i pulsanti
+
+✅ **Risolto**: Le notifiche ora appaiono in `bottom-right` invece che in alto
+
+### Email processate spariscono al riavvio
+
+✅ **Risolto**: Implementata persistenza automatica in `emails.json`
+
+---
+
+## 🔐 Sicurezza e Privacy
+
+- ⚠️ **NON committare** file `config_api.json` o `reparti_api.json`
+- ✅ Usa **App Password** per Gmail, mai password principale
+- ✅ **AI locale** con Ollama - nessun dato inviato a servizi cloud
+- ✅ **Dati sensibili** esclusi da Git tramite `.gitignore`
+- ✅ Per produzione: implementa autenticazione JWT e HTTPS
+
+---
+
+## 📚 Documentazione Aggiuntiva
+
+- **[STARTUP.md](STARTUP.md)** - Comandi avvio rapido PowerShell
+- **[SETUP.md](SETUP.md)** - Setup dettagliato passo-passo  
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Guida integrazione tecnica
+
+---
+
+## 🎯 Roadmap Future Features
+
+- [ ] Supporto allegati PDF con OCR
+- [ ] Template personalizzabili per risposte automatiche
+- [ ] Dashboard analytics avanzate
+- [ ] Export report CSV/Excel
+- [ ] Integrazione webhook per notifiche esterne
+- [ ] Multi-utente con ruoli e permessi
+
+---
+
+## 🤝 Contributi
+
+Progetto personale ma suggerimenti benvenuti! Sentiti libero di:
+- Aprire issue per bug o feature request
+- Fare fork e modificare per il tuo use case
+- Condividere feedback o casi d'uso
+
+---
+
+## � Licenza
+
+**Private Project** - Tutti i diritti riservati
+
+---
+
+## 🙏 Ringraziamenti
+
+- **Backend originale**: [lordpba/Automated-Mail-Support-System](https://github.com/lordpba/Automated-Mail-Support-System)
+- **UI Framework**: React + Vite + TypeScript
+- **UI Components**: Shadcn/ui + Radix UI + Tailwind CSS
+- **AI Provider**: Ollama (gemma3, llama3.1, altri modelli)
+- **Charts**: Recharts
+- **Notifications**: Sonner
+
+---
+
+## 📞 Supporto
+
+Per problemi o domande:
+1. Consulta [Troubleshooting](#-troubleshooting)
+2. Controlla [STARTUP.md](STARTUP.md)
+3. Apri issue su GitHub
+
+---
+
+<div align="center">
+
+**Costruito con ❤️ per gestione efficiente della posta di supporto**
+
+🌟 Star this repo se lo trovi utile!
+
+[🚀 Quick Start](#-installazione-rapida) • [📖 Docs](#-documentazione-aggiuntiva) • [🐛 Issues](https://github.com/Gaia-Cecchi/Automated-Mail-Support-System-with-UI/issues)
+
+</div>  
 
 ---
 

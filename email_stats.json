@@ -1,34 +1,34 @@
 {
-  "totalProcessed": 29,
-  "totalReceived": 55,
+  "totalProcessed": 49,
+  "totalReceived": 83,
   "byDepartment": {
-    "Gaming & Entertainment": 15,
-    "Technical Support": 6,
-    "Administration": 3,
-    "Service Notifications": 4,
-    "Sales": 1
+    "Gaming & Entertainment": 21,
+    "Technical Support": 9,
+    "Administration": 5,
+    "Service Notifications": 10,
+    "Sales": 4
   },
-  "lastUpdated": "2025-10-29T15:53:27.614116",
+  "lastUpdated": "2025-10-29T16:13:11.278074",
   "confidenceByDepartment": {
     "Sales": {
-      "total": 85.0,
-      "count": 1
+      "total": 350.0,
+      "count": 4
     },
     "Administration": {
-      "total": 85.0,
-      "count": 1
+      "total": 275.0,
+      "count": 3
     },
     "Gaming & Entertainment": {
-      "total": 550.0,
-      "count": 6
+      "total": 1110.0,
+      "count": 12
     },
     "Service Notifications": {
-      "total": 180.0,
-      "count": 2
+      "total": 740.0,
+      "count": 8
     },
     "Technical Support": {
-      "total": 95.0,
-      "count": 1
+      "total": 380.0,
+      "count": 4
     }
   }
 }

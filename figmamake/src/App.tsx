@@ -90,19 +90,11 @@ export default function App() {
         if (storedEmails && storedEmails.length > 0) {
           setEmails(storedEmails);
           console.log(`Loaded ${storedEmails.length} emails from backend storage`);
+        } else {
+          console.log('No stored emails found, start fresh');
         }
-        
-        // After loading stored emails, check for new ones
-        // This ensures we don't lose emails if backend was down
-        setTimeout(() => {
-          handleCheckMail();
-        }, 1000);
       } catch (error) {
         console.error('Failed to load emails from backend:', error);
-        // Even if loading fails, try to check for new emails
-        setTimeout(() => {
-          handleCheckMail();
-        }, 1000);
       }
     };
     
