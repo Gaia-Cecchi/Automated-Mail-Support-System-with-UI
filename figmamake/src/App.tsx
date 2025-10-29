@@ -517,6 +517,13 @@ export default function App() {
             : email
         )
       );
+      
+      // Update historical stats for each forwarded email
+      for (const email of emailsToProcess) {
+        if (email.suggestedDepartment) {
+          await updateHistoricalStats(email, email.suggestedDepartment);
+        }
+      }
 
       setProcessDialogOpen(false);
       

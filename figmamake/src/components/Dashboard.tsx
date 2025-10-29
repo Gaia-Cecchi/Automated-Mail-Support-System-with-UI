@@ -43,29 +43,19 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
     return false;
   });
   
-  // Filter emails PROCESSED today (based on processedAt)
-  // "Processed" means analyzed by AI - includes both forwarded AND cancelled emails
-  // The AI analysis, confidence, and suggested department are SAVED and persist
-  // until the email is actually forwarded (status='forwarded')
-  const processedToday = allTodayEmails.filter(email => {
-    if (!email.processedAt) return false;
-    
-    const processedDate = email.processedAt instanceof Date 
-      ? new Date(email.processedAt) 
-      : new Date(email.processedAt);
-    
-    processedDate.setHours(0, 0, 0, 0);
-    return processedDate.getTime() === today.getTime();
-  });
+  // Today's forwarded emails (only actually sent emails)
+  const todayForwarded = allTodayEmails.filter(e => e.status === 'forwarded');
   
-  console.log(`📊 Dashboard - Total today: ${allTodayEmails.length}, Processed today: ${processedToday.length}`);
+  // Today's to process emails (everything that is NOT forwarded)
+  // Includes: not analyzed, analyzed but not forwarded, cancelled, errors
+  const todayToProcess = allTodayEmails.filter(e => e.status !== 'forwarded');
   
-  const todayForwarded = processedToday.filter(e => e.status === 'forwarded');
-  const todayProcessedNotForwarded = processedToday.filter(e => e.status !== 'forwarded' && e.status !== 'not_processed');
-  const todayToProcess = allTodayEmails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error');
-  const todayAvgConfidence = processedToday.length > 0 
-    ? (processedToday.reduce((sum, e) => sum + (e.confidence || 0), 0) / processedToday.length).toFixed(0)
+  // Average confidence for today's forwarded emails
+  const todayAvgConfidence = todayForwarded.length > 0 
+    ? (todayForwarded.reduce((sum, e) => sum + (e.confidence || 0), 0) / todayForwarded.length).toFixed(0)
     : 0;
+  
+  console.log(`📊 Dashboard - Total today: ${allTodayEmails.length}, Forwarded today: ${todayForwarded.length}, To Process today: ${todayToProcess.length}`);
   
   // Calcola statistiche (today)
   const totalEmails = toProcessEmails.length + processedEmails.length;
@@ -106,30 +96,26 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
     <div className="mb-4 flex-shrink-0">
       {/* Statistiche generali - Due card affiancate */}
       <div className="grid grid-cols-2 gap-3 mb-3">
-        {/* Processed Today */}
+        {/* Today's Stats */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">📅 Processed Today</CardTitle>
+            <CardTitle className="text-base">📅 Today</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-5 gap-2">
-              <div className="text-center">
+            <div className="flex flex-row justify-between items-center px-4">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold">{allTodayEmails.length}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold text-green-600">{todayForwarded.length}</div>
                 <div className="text-xs text-gray-500">Forwarded</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{todayProcessedNotForwarded.length}</div>
-                <div className="text-xs text-gray-500">Processed</div>
-              </div>
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold text-blue-600">{todayAvgConfidence}%</div>
                 <div className="text-xs text-gray-500">Confidence</div>
               </div>
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold text-orange-600">{todayToProcess.length}</div>
                 <div className="text-xs text-gray-500">To Process</div>
               </div>
@@ -140,23 +126,19 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
         {/* All Time Stats */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">📊 All Time Statistics</CardTitle>
+            <CardTitle className="text-base">📊 All Time</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-5 gap-2">
-              <div className="text-center">
+            <div className="flex flex-row justify-between items-center px-4">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold">{historicalStats?.totalReceived || totalEmails}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold text-green-600">{historicalStats?.totalProcessed || processedCount}</div>
                 <div className="text-xs text-gray-500">Forwarded</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{processedEmails.filter(e => e.status !== 'forwarded').length}</div>
-                <div className="text-xs text-gray-500">Processed</div>
-              </div>
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold text-blue-600">
                   {processedEmails.length > 0 
                     ? (processedEmails.reduce((sum, e) => sum + (e.confidence || 0), 0) / processedEmails.length).toFixed(0)
@@ -164,7 +146,7 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
                 </div>
                 <div className="text-xs text-gray-500">Confidence</div>
               </div>
-              <div className="text-center">
+              <div className="text-center flex-1">
                 <div className="text-2xl font-bold text-orange-600">{totalEmails - processedCount}</div>
                 <div className="text-xs text-gray-500">To Process</div>
               </div>
