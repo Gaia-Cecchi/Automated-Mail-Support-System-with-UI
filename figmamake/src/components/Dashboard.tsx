@@ -145,20 +145,20 @@ export function Dashboard({ emails, historicalStats }: DashboardProps) {
           <CardContent className="pt-0">
             <div className="flex flex-row justify-between items-center px-4">
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold">{allTodayEmails.length}</div>
+                <div className="text-4xl font-black text-blue-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{allTodayEmails.length}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold text-green-600">{todayForwarded.length}</div>
+                <div className="text-4xl font-black text-green-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{todayForwarded.length}</div>
                 <div className="text-xs text-gray-500">Forwarded</div>
               </div>
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold text-blue-600">{todayAvgConfidence}%</div>
-                <div className="text-xs text-gray-500">Confidence</div>
+                <div className="text-4xl font-black text-orange-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{todayToProcess.length}</div>
+                <div className="text-xs text-gray-500">To Process</div>
               </div>
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold text-orange-600">{todayToProcess.length}</div>
-                <div className="text-xs text-gray-500">To Process</div>
+                <div className="text-4xl font-black text-purple-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{todayAvgConfidence}%</div>
+                <div className="text-xs text-gray-500">Confidence</div>
               </div>
             </div>
           </CardContent>
@@ -172,24 +172,24 @@ export function Dashboard({ emails, historicalStats }: DashboardProps) {
           <CardContent className="pt-0">
             <div className="flex flex-row justify-between items-center px-4">
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold">{historicalStats?.totalReceived || totalEmails}</div>
+                <div className="text-4xl font-black text-blue-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{historicalStats?.totalReceived || totalEmails}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold text-green-600">{historicalStats?.totalProcessed || processedCount}</div>
+                <div className="text-4xl font-black text-green-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{historicalStats?.totalProcessed || processedCount}</div>
                 <div className="text-xs text-gray-500">Forwarded</div>
               </div>
               <div className="text-center flex-1">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-4xl font-black text-orange-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>{totalEmails - processedCount}</div>
+                <div className="text-xs text-gray-500">To Process</div>
+              </div>
+              <div className="text-center flex-1">
+                <div className="text-4xl font-black text-purple-600" style={{ textShadow: '0 0 2px rgba(0,0,0,0.2)' }}>
                   {processedEmails.length > 0 
                     ? (processedEmails.reduce((sum, e) => sum + (e.confidence || 0), 0) / processedEmails.length).toFixed(0)
                     : 0}%
                 </div>
                 <div className="text-xs text-gray-500">Confidence</div>
-              </div>
-              <div className="text-center flex-1">
-                <div className="text-2xl font-bold text-orange-600">{totalEmails - processedCount}</div>
-                <div className="text-xs text-gray-500">To Process</div>
               </div>
             </div>
           </CardContent>

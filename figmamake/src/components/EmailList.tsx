@@ -5,6 +5,7 @@ import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { Clock, AlertCircle, CheckCircle, Loader2, XCircle, Inbox, Archive, CheckSquare, Trash2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { getDepartmentColor, getContrastTextColor } from '../utils/colors';
 
 interface EmailListProps {
   emails: Email[];
@@ -141,16 +142,32 @@ export function EmailList({
                   ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' 
                   : 'bg-red-500/20 text-red-700 dark:text-red-400'
               }`}>
+                <span
+                  className="inline-block w-2 h-2 rounded-full mr-1"
+                  style={{ backgroundColor: getDepartmentColor(email.suggestedDepartment || '') }}
+                />
                 {email.suggestedDepartment} • {email.confidence}%
               </Badge>
             )}
             {email.status === 'forwarded' && (
-              <Badge className="text-xs bg-green-500/20 text-green-700 dark:text-green-400">
-                ✅ {t('forwarded')}{email.forwardedToDepartment ? ` → ${email.forwardedToDepartment}` : ''}
+              <Badge className="text-xs" style={{
+                backgroundColor: email.forwardedToDepartment ? getDepartmentColor(email.forwardedToDepartment) : '#6B7280',
+                color: email.forwardedToDepartment ? getContrastTextColor(getDepartmentColor(email.forwardedToDepartment)) : '#FFFFFF'
+              }}>
+                ✅ {t('forwarded')}
+                {email.forwardedToDepartment && (
+                  <>
+                    {' → '}
+                    {email.forwardedToDepartment}
+                  </>
+                )}
               </Badge>
             )}
             {email.status === 'cancelled' && (
-              <Badge className="text-xs bg-gray-500/20 text-gray-700 dark:text-gray-400">
+              <Badge className="text-xs" style={{
+                backgroundColor: email.suggestedDepartment ? getDepartmentColor(email.suggestedDepartment) : '#6B7280',
+                color: email.suggestedDepartment ? getContrastTextColor(getDepartmentColor(email.suggestedDepartment)) : '#FFFFFF'
+              }}>
                 {t('cancelled')}
               </Badge>
             )}

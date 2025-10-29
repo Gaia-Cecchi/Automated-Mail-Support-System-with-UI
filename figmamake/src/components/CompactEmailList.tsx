@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Mail, Clock, TrendingUp, Play, Trash2 } from "lucide-react";
 import { useState } from 'react';
+import { getDepartmentColor, getContrastTextColor } from '../utils/colors';
 
 interface CompactEmailListProps {
   emails: Email[];
@@ -170,17 +171,25 @@ export function CompactEmailList({
                   </div>
                   
                   <div className="flex flex-col items-end gap-1">
-                    {(email.suggestedDepartment || email.forwardedToDepartment) && (
-                      <Badge variant="secondary" className="text-xs">
-                        {email.forwardedToDepartment || email.suggestedDepartment}
-                      </Badge>
-                    )}
-                    {email.confidence !== undefined && email.confidence > 0 && (
-                      <div className={`flex items-center gap-1 text-xs font-semibold ${getConfidenceColor(email.confidence)}`}>
-                        <TrendingUp className="w-3 h-3" />
-                        {email.confidence}%
-                      </div>
-                    )}
+                    <div className="flex flex-col items-center gap-1">
+                      {(email.suggestedDepartment || email.forwardedToDepartment) && (
+                        <Badge 
+                          className="text-xs" 
+                          style={{
+                            backgroundColor: getDepartmentColor(email.forwardedToDepartment || email.suggestedDepartment || ''),
+                            color: getContrastTextColor(getDepartmentColor(email.forwardedToDepartment || email.suggestedDepartment || ''))
+                          }}
+                        >
+                          {email.forwardedToDepartment || email.suggestedDepartment}
+                        </Badge>
+                      )}
+                      {email.confidence !== undefined && email.confidence > 0 && (
+                        <div className={`flex items-center gap-1 text-xs font-semibold ${getConfidenceColor(email.confidence)}`}>
+                          <TrendingUp className="w-3 h-3" />
+                          {email.confidence}%
+                        </div>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       {showProcessButton && email.status === 'not_processed' && onProcess && (
                         <Button

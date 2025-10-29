@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Building2, Mail, Edit2, Save, X, Trash2 } from 'lucide-react';
 import { Department } from '../types/email';
 import { useState } from 'react';
+import { getDepartmentColor } from '../utils/colors';
 
 interface QuickDepartmentsButtonProps {
   departments: Department[];
@@ -124,7 +125,10 @@ export function QuickDepartmentsButton({ departments, language, onUpdateDepartme
                       />
                     ) : (
                       <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-500 shrink-0" />
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: getDepartmentColor(dept.nome) }}
+                        />
                         <span className="break-words">{dept.nome}</span>
                       </div>
                     )}

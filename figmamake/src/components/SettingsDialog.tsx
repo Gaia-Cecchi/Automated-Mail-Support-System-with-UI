@@ -5,13 +5,14 @@ import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { ScrollArea } from './ui/scroll-area';
 import { Settings, Server, Key, MapPin, Bell, Trash2, Zap, Languages, Edit2, Check, X } from 'lucide-react';
 import { AppSettings, Department } from '../types/email';
 import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { useTranslation } from '../hooks/useTranslation';
-import { ScrollArea } from './ui/scroll-area';
+import { getDepartmentColor } from '../utils/colors';
 
 interface SettingsDialogProps {
   settings: AppSettings;
@@ -509,7 +510,13 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
                           // View Mode
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium mb-1">{dept.nome}</p>
+                              <div className="flex items-center gap-2 mb-1">
+                                <div
+                                  className="w-3 h-3 rounded-full flex-shrink-0 border border-gray-300 dark:border-gray-600"
+                                  style={{ backgroundColor: getDepartmentColor(dept.nome) }}
+                                />
+                                <p className="font-medium">{dept.nome}</p>
+                              </div>
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                                 {dept.descrizione}
                               </p>

@@ -3,6 +3,7 @@ import { Email } from '../types/email';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Mail, User, TrendingUp } from "lucide-react";
+import { getDepartmentColor, getContrastTextColor } from '../utils/colors';
 
 interface EmailDetailModalProps {
   email: Email | null;
@@ -77,7 +78,15 @@ export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDet
               <div className="space-y-2">
                 <div>
                   <span className="font-medium">Suggested Department:</span>
-                  <Badge className="ml-2">{email.suggestedDepartment}</Badge>
+                  <Badge
+                    className="ml-2"
+                    style={{
+                      backgroundColor: getDepartmentColor(email.suggestedDepartment || ''),
+                      color: getContrastTextColor(getDepartmentColor(email.suggestedDepartment || ''))
+                    }}
+                  >
+                    {email.suggestedDepartment}
+                  </Badge>
                 </div>
                 <div>
                   <span className="font-medium">Confidence:</span>
@@ -111,7 +120,15 @@ export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDet
           {email.forwardedToDepartment && (
             <div className="border rounded-lg p-4 bg-green-50">
               <span className="font-medium">Forwarded to:</span>
-              <Badge className="ml-2 bg-green-600">{email.forwardedToDepartment}</Badge>
+              <Badge
+                className="ml-2"
+                style={{
+                  backgroundColor: getDepartmentColor(email.forwardedToDepartment),
+                  color: getContrastTextColor(getDepartmentColor(email.forwardedToDepartment))
+                }}
+              >
+                {email.forwardedToDepartment}
+              </Badge>
             </div>
           )}
 

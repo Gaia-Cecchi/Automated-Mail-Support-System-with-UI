@@ -8,6 +8,7 @@ import { Progress } from './ui/progress';
 import { Mail, Paperclip, AlertCircle, CheckCircle, FileText, MapPin, Edit3 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { ManualOverrideDialog } from './ManualOverrideDialog';
+import { getDepartmentColor } from '../utils/colors';
 
 interface EmailDetailProps {
   email: Email;
@@ -181,7 +182,13 @@ export function EmailDetail({ email, departments, automaticMode, onProcess, onRe
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="mb-1">{email.suggestedDepartment}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: getDepartmentColor(email.suggestedDepartment || '') }}
+                    />
+                    <p>{email.suggestedDepartment}</p>
+                  </div>
                   {departments.find(d => d.nome === email.suggestedDepartment) && (
                     <>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -202,7 +209,14 @@ export function EmailDetail({ email, departments, automaticMode, onProcess, onRe
             <Card className="p-4 bg-green-50/50 dark:bg-green-950/20 border-2 border-green-200 dark:border-green-800">
               <Label className="mb-3 block">{t('forwardedToDepartment')}</Label>
               <div>
-                <p className="mb-1">✅ {email.forwardedToDepartment}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <span>✅</span>
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: getDepartmentColor(email.forwardedToDepartment) }}
+                  />
+                  <p>{email.forwardedToDepartment}</p>
+                </div>
                 {departments.find(d => d.nome === email.forwardedToDepartment) && (
                   <>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
