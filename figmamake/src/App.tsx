@@ -987,7 +987,7 @@ export default function App() {
         language={settings.language}
       />
 
-      <Toaster position="top-right" />
+      <Toaster position="bottom-right" />
     </div>
   );
 }
