@@ -224,7 +224,7 @@ export function BatchReviewModal({
                     <div className="mt-3 pt-3 border-t">
                       <Badge variant="secondary">
                         <X className="h-3 w-3 mr-1" />
-                        Will be marked as unprocessed (not analyzed)
+                        Will be marked as cancelled (keeps AI analysis)
                       </Badge>
                     </div>
                   )}
@@ -245,7 +245,7 @@ export function BatchReviewModal({
               {excludedEmails.size > 0 && approvedCount > 0 && <span className="mx-2">•</span>}
               {excludedEmails.size > 0 && (
                 <span className="font-medium text-orange-600">
-                  {excludedEmails.size} email{excludedEmails.size !== 1 ? 's' : ''} marked as unprocessed
+                  {excludedEmails.size} email{excludedEmails.size !== 1 ? 's' : ''} will be cancelled (analyzed but not forwarded)
                 </span>
               )}
             </div>

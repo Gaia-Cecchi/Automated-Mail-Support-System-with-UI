@@ -20,6 +20,7 @@ from modules.ticket_processor_simple import TicketProcessorSimple
 from modules.process_mail import read_pdf_attachment
 from modules.config_manager import ConfigManager
 from modules.reparti_manager import RepartiManager
+from modules.stats_manager import StatsManager
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -31,6 +32,7 @@ logger = logging.getLogger(__name__)
 # Global state
 config_manager = ConfigManager('config_api.json')
 reparti_manager = RepartiManager('reparti_api.json')
+stats_manager = StatsManager('email_stats.json')
 ticket_processor = None
 automation_thread = None
 automation_enabled = False
@@ -422,6 +424,60 @@ def automation_status():
         'enabled': automation_enabled,
         'checkInterval': int(config_manager.get('CHECK_INTERVAL', 5))
     }), 200
+
+# ============= STATISTICS ENDPOINTS =============
+
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """Get email statistics"""
+    try:
+        stats = stats_manager.get_stats()
+        logger.info(f"GET /api/stats - Returning stats: {stats}")
+        return jsonify(stats), 200
+    except Exception as e:
+        logger.error(f"Error getting stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stats/received', methods=['POST'])
+def update_received():
+    """Update received email count"""
+    try:
+        data = request.json
+        count = data.get('count', 1)
+        
+        stats = stats_manager.update_received_count(count)
+        logger.info(f"Updated received count: +{count}")
+        
+        return jsonify(stats), 200
+    except Exception as e:
+        logger.error(f"Error updating received count: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stats/processed', methods=['POST'])
+def update_processed():
+    """Update processed email stats"""
+    try:
+        data = request.json
+        department = data.get('department', 'Unknown')
+        
+        stats = stats_manager.update_processed_email(department)
+        logger.info(f"Updated processed stats for department: {department}")
+        
+        return jsonify(stats), 200
+    except Exception as e:
+        logger.error(f"Error updating processed stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/stats/reset', methods=['POST'])
+def reset_stats():
+    """Reset all statistics"""
+    try:
+        stats = stats_manager.reset_stats()
+        logger.info("Stats reset to default")
+        return jsonify(stats), 200
+    except Exception as e:
+        logger.error(f"Error resetting stats: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # ============= HEALTH CHECK =============
 
