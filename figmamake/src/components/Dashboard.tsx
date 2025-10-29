@@ -3,25 +3,28 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Ba
 import { Email } from '../types/email';
 
 interface DashboardProps {
-  toProcessEmails: Email[];
-  processedEmails: Email[];
+  emails: Email[];
   historicalStats?: {
     totalProcessed: number;
     totalReceived: number;
     byDepartment: Record<string, number>;
+    confidenceByDepartment?: Record<string, { total: number; count: number }>;
     lastUpdated: string;
   };
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-export function Dashboard({ toProcessEmails, processedEmails, historicalStats }: DashboardProps) {
+export function Dashboard({ emails, historicalStats }: DashboardProps) {
   // Today's date normalized
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
+  const toProcessEmails = emails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error');
+  const processedEmails = emails.filter(e => e.status === 'forwarded' || e.status === 'cancelled');
+
   // All emails from today (received today OR processed today)
-  const allTodayEmails = [...toProcessEmails, ...processedEmails].filter(email => {
+  const allTodayEmails = emails.filter(email => {
     // Check if received today
     if (email.timestamp) {
       const receivedDate = email.timestamp instanceof Date 
@@ -63,8 +66,31 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
   const toProcessCount = toProcessEmails.length;
   const processedPercentage = totalEmails > 0 ? ((processedCount / totalEmails) * 100).toFixed(1) : 0;
 
-  // Statistiche per department
-  const departmentStats = processedEmails.reduce((acc, email) => {
+  // Statistiche per department - usa sempre historicalStats se disponibile
+  // altrimenti fallback sulle email in memoria
+  const departmentStats = (() => {
+    if (historicalStats && Object.keys(historicalStats.byDepartment).length > 0) {
+      // Usa le statistiche storiche (persistite)
+      return Object.entries(historicalStats.byDepartment).reduce((acc, [dept, count]) => {
+        acc[dept] = { count, totalConfidence: 0 };
+        return acc;
+      }, {} as Record<string, { count: number; totalConfidence: number }>);
+    } else {
+      // Fallback: calcola dalle email in memoria
+      return processedEmails.reduce((acc, email) => {
+        const dept = email.forwardedToDepartment || email.suggestedDepartment || 'Unassigned';
+        if (!acc[dept]) {
+          acc[dept] = { count: 0, totalConfidence: 0 };
+        }
+        acc[dept].count++;
+        acc[dept].totalConfidence += email.confidence || 0;
+        return acc;
+      }, {} as Record<string, { count: number; totalConfidence: number }>);
+    }
+  })();
+
+  // Calcola confidence dalle email processate (in memoria)
+  const emailsByDept = processedEmails.reduce((acc, email) => {
     const dept = email.forwardedToDepartment || email.suggestedDepartment || 'Unassigned';
     if (!acc[dept]) {
       acc[dept] = { count: 0, totalConfidence: 0 };
@@ -74,20 +100,35 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
     return acc;
   }, {} as Record<string, { count: number; totalConfidence: number }>);
 
-  // Dati per grafico a torta
+  // Dati per grafico a torta - usa le statistiche storiche
+  const totalProcessedFromStats = historicalStats?.totalProcessed || processedCount;
   const pieData = Object.entries(departmentStats).map(([name, stats]) => ({
     name,
     value: stats.count,
-    percentage: ((stats.count / processedCount) * 100).toFixed(1)
+    percentage: totalProcessedFromStats > 0 
+      ? ((stats.count / totalProcessedFromStats) * 100).toFixed(1) 
+      : '0'
   }));
 
   // Dati per grafico a barre (confidence media per department)
-  const barData = Object.entries(departmentStats).map(([name, stats]) => ({
-    name,
-    confidence: (stats.totalConfidence / stats.count).toFixed(1)
-  }));
+  // Usa i dati storici se disponibili, altrimenti dalle email in memoria
+  const barData = (() => {
+    if (historicalStats?.confidenceByDepartment && Object.keys(historicalStats.confidenceByDepartment).length > 0) {
+      // Usa confidence storica
+      return Object.entries(historicalStats.confidenceByDepartment).map(([name, data]) => ({
+        name,
+        confidence: data.count > 0 ? (data.total / data.count).toFixed(1) : 0
+      }));
+    } else {
+      // Fallback: usa email in memoria
+      return Object.entries(emailsByDept).map(([name, stats]) => ({
+        name,
+        confidence: stats.count > 0 ? (stats.totalConfidence / stats.count).toFixed(1) : 0
+      }));
+    }
+  })();
 
-  // Confidence medio globale
+  // Confidence medio globale - dalle email in memoria
   const avgConfidence = processedEmails.length > 0
     ? (processedEmails.reduce((sum, email) => sum + (email.confidence || 0), 0) / processedEmails.length).toFixed(1)
     : 0;
@@ -99,7 +140,7 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
         {/* Today's Stats */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">📅 Today</CardTitle>
+            <CardTitle className="text-base">📅 Received Today</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="flex flex-row justify-between items-center px-4">
@@ -162,7 +203,7 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
             <CardTitle className="text-sm">Distribution by Department</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            {processedEmails.length > 0 ? (
+            {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
@@ -195,7 +236,7 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
             <CardTitle className="text-sm">Confidence by Department</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            {processedEmails.length > 0 ? (
+            {barData.length > 0 ? (
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" />

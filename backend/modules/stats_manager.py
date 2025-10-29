@@ -48,6 +48,7 @@ class StatsManager:
             'totalProcessed': 0,
             'totalReceived': 0,
             'byDepartment': {},
+            'confidenceByDepartment': {},  # {dept: {total: float, count: int}}
             'lastUpdated': datetime.now().isoformat()
         }
     
@@ -81,12 +82,13 @@ class StatsManager:
         logger.info(f"Updated received count: +{count} (total: {self._stats['totalReceived']})")
         return self.get_stats()
     
-    def update_processed_email(self, department: str) -> Dict[str, Any]:
+    def update_processed_email(self, department: str, confidence: float = 0.0) -> Dict[str, Any]:
         """
         Update stats when an email is processed/forwarded
         
         Args:
             department: Department name the email was forwarded to
+            confidence: AI confidence score (0-100)
             
         Returns:
             Updated stats
@@ -100,10 +102,20 @@ class StatsManager:
         
         self._stats['byDepartment'][department] = self._stats['byDepartment'].get(department, 0) + 1
         
+        # Update confidence for department
+        if 'confidenceByDepartment' not in self._stats:
+            self._stats['confidenceByDepartment'] = {}
+        
+        if department not in self._stats['confidenceByDepartment']:
+            self._stats['confidenceByDepartment'][department] = {'total': 0.0, 'count': 0}
+        
+        self._stats['confidenceByDepartment'][department]['total'] += confidence
+        self._stats['confidenceByDepartment'][department]['count'] += 1
+        
         self._stats['lastUpdated'] = datetime.now().isoformat()
         self._save_stats()
         
-        logger.info(f"Updated processed stats: {department} (total: {self._stats['totalProcessed']})")
+        logger.info(f"Updated processed stats: {department} (confidence: {confidence}, total: {self._stats['totalProcessed']})")
         return self.get_stats()
     
     def reset_stats(self) -> Dict[str, Any]:

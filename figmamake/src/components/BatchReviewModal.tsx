@@ -219,15 +219,6 @@ export function BatchReviewModal({
                       </div>
                     </div>
                   </div>
-
-                  {isExcluded && (
-                    <div className="mt-3 pt-3 border-t">
-                      <Badge variant="secondary">
-                        <X className="h-3 w-3 mr-1" />
-                        Will be marked as cancelled (keeps AI analysis)
-                      </Badge>
-                    </div>
-                  )}
                 </div>
               );
             })}
