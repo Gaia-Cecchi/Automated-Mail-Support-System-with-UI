@@ -206,6 +206,7 @@ class ApiService {
     totalProcessed: number;
     totalReceived: number;
     byDepartment: Record<string, number>;
+    confidenceByDepartment?: Record<string, { total: number; count: number }>;
     lastUpdated: string;
   }> {
     return this.request('/stats');
@@ -215,6 +216,7 @@ class ApiService {
     totalProcessed: number;
     totalReceived: number;
     byDepartment: Record<string, number>;
+    confidenceByDepartment?: Record<string, { total: number; count: number }>;
     lastUpdated: string;
   }> {
     return this.request('/stats/received', {
@@ -223,15 +225,16 @@ class ApiService {
     });
   }
 
-  async updateProcessedEmail(department: string): Promise<{
+  async updateProcessedEmail(department: string, confidence: number = 0): Promise<{
     totalProcessed: number;
     totalReceived: number;
     byDepartment: Record<string, number>;
+    confidenceByDepartment: Record<string, { total: number; count: number }>;
     lastUpdated: string;
   }> {
     return this.request('/stats/processed', {
       method: 'POST',
-      body: JSON.stringify({ department }),
+      body: JSON.stringify({ department, confidence }),
     });
   }
 
@@ -242,6 +245,46 @@ class ApiService {
     lastUpdated: string;
   }> {
     return this.request('/stats/reset', {
+      method: 'POST',
+    });
+  }
+
+  // ============= EMAIL STORAGE =============
+
+  async getStoredEmails(): Promise<any[]> {
+    return this.request('/emails/storage');
+  }
+
+  async saveEmails(emails: any[]): Promise<{
+    success: boolean;
+    count: number;
+    timestamp: string;
+  }> {
+    return this.request('/emails/storage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ emails }),
+    });
+  }
+
+  async deleteStoredEmail(emailId: string): Promise<{
+    success: boolean;
+    id?: string;
+    remaining?: number;
+    error?: string;
+  }> {
+    return this.request(`/emails/storage/${emailId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async clearStoredEmails(): Promise<{
+    success: boolean;
+    cleared_count: number;
+  }> {
+    return this.request('/emails/storage/clear', {
       method: 'POST',
     });
   }

@@ -37,11 +37,13 @@ export default function App() {
     totalProcessed: number;
     totalReceived: number;
     byDepartment: Record<string, number>;
+    confidenceByDepartment?: Record<string, { total: number; count: number }>;
     lastUpdated: string;
   }>({
     totalProcessed: 0,
     totalReceived: 0,
     byDepartment: {},
+    confidenceByDepartment: {},
     lastUpdated: new Date().toISOString()
   });
   
@@ -80,6 +82,53 @@ export default function App() {
   
   const { t } = useTranslation(settings.language);
   
+  // Load stored emails from backend on mount
+  useEffect(() => {
+    const loadEmails = async () => {
+      try {
+        const storedEmails = await apiService.getStoredEmails();
+        if (storedEmails && storedEmails.length > 0) {
+          setEmails(storedEmails);
+          console.log(`Loaded ${storedEmails.length} emails from backend storage`);
+        }
+        
+        // After loading stored emails, check for new ones
+        // This ensures we don't lose emails if backend was down
+        setTimeout(() => {
+          handleCheckMail();
+        }, 1000);
+      } catch (error) {
+        console.error('Failed to load emails from backend:', error);
+        // Even if loading fails, try to check for new emails
+        setTimeout(() => {
+          handleCheckMail();
+        }, 1000);
+      }
+    };
+    
+    if (settingsLoaded) {
+      loadEmails();
+    }
+  }, [settingsLoaded]);
+  
+  // Auto-save emails to backend whenever they change
+  useEffect(() => {
+    const saveEmails = async () => {
+      if (emails.length > 0 && settingsLoaded) {
+        try {
+          await apiService.saveEmails(emails);
+          console.log(`Auto-saved ${emails.length} emails to backend`);
+        } catch (error) {
+          console.error('Failed to auto-save emails:', error);
+        }
+      }
+    };
+    
+    // Debounce save to avoid too many requests
+    const timeoutId = setTimeout(saveEmails, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [emails, settingsLoaded]);
+  
   // Load historical stats from backend on mount
   useEffect(() => {
     const loadStats = async () => {
@@ -100,7 +149,8 @@ export default function App() {
   // Update historical stats when email is forwarded
   const updateHistoricalStats = async (email: Email, department: string) => {
     try {
-      const updatedStats = await apiService.updateProcessedEmail(department);
+      const confidence = email.confidence || 0;
+      const updatedStats = await apiService.updateProcessedEmail(department, confidence);
       setHistoricalStats(updatedStats);
       console.log('Historical stats updated:', updatedStats);
     } catch (error) {
@@ -216,7 +266,12 @@ export default function App() {
           pdfContent: email.pdfContent
         }));
         
-        setEmails(prev => [...newEmails, ...prev]);
+        // Add only new emails (avoid duplicates)
+        setEmails(prev => {
+          const existingIds = new Set(prev.map(e => e.id));
+          const uniqueNewEmails = newEmails.filter(e => !existingIds.has(e.id));
+          return [...uniqueNewEmails, ...prev];
+        });
         
         // Update historical stats with new received emails
         updateReceivedCount(newEmails.length);
@@ -855,8 +910,7 @@ export default function App() {
       <div className="flex-1 flex flex-col p-4 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
         {/* Dashboard */}
         <Dashboard 
-          toProcessEmails={emails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error')}
-          processedEmails={emails.filter(e => e.status === 'forwarded' || e.status === 'cancelled')}
+          emails={emails}
           historicalStats={historicalStats}
         />
         
@@ -868,6 +922,7 @@ export default function App() {
             title="To Process"
             onEmailClick={handleEmailClick}
             onProcess={handleProcessEmail}
+            onDelete={handleRemove}
             showProcessButton={true}
             departments={settings.departments}
             showDepartmentFilter={false}

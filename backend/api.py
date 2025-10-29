@@ -21,6 +21,7 @@ from modules.process_mail import read_pdf_attachment
 from modules.config_manager import ConfigManager
 from modules.reparti_manager import RepartiManager
 from modules.stats_manager import StatsManager
+from modules.email_storage import EmailStorage
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 config_manager = ConfigManager('config_api.json')
 reparti_manager = RepartiManager('reparti_api.json')
 stats_manager = StatsManager('email_stats.json')
+email_storage = EmailStorage('emails.json')
 ticket_processor = None
 automation_thread = None
 automation_enabled = False
@@ -459,14 +461,15 @@ def update_processed():
     try:
         data = request.json
         department = data.get('department', 'Unknown')
+        confidence = data.get('confidence', 0.0)
         
-        stats = stats_manager.update_processed_email(department)
-        logger.info(f"Updated processed stats for department: {department}")
+        stats = stats_manager.update_processed_email(department, confidence)
+        logger.info(f"Updated processed stats for department: {department} (confidence: {confidence})")
         
         return jsonify(stats), 200
     except Exception as e:
         logger.error(f"Error updating processed stats: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)})
 
 @app.route('/api/stats/reset', methods=['POST'])
 def reset_stats():
@@ -477,6 +480,52 @@ def reset_stats():
         return jsonify(stats), 200
     except Exception as e:
         logger.error(f"Error resetting stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ============= EMAIL STORAGE =============
+
+@app.route('/api/emails/storage', methods=['GET'])
+def get_stored_emails():
+    """Get all stored emails"""
+    try:
+        emails = email_storage.get_all_emails()
+        logger.info(f"Retrieved {len(emails)} emails from storage")
+        return jsonify(emails), 200
+    except Exception as e:
+        logger.error(f"Error getting stored emails: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/emails/storage', methods=['POST'])
+def save_emails():
+    """Save all emails to storage"""
+    try:
+        data = request.get_json()
+        emails = data.get('emails', [])
+        result = email_storage.save_all_emails(emails)
+        logger.info(f"Saved {len(emails)} emails to storage")
+        return jsonify(result), 200
+    except Exception as e:
+        logger.error(f"Error saving emails: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/emails/storage/<email_id>', methods=['DELETE'])
+def delete_stored_email(email_id):
+    """Delete a specific email from storage"""
+    try:
+        result = email_storage.delete_email(email_id)
+        return jsonify(result), 200 if result['success'] else 404
+    except Exception as e:
+        logger.error(f"Error deleting email: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/emails/storage/clear', methods=['POST'])
+def clear_stored_emails():
+    """Clear all emails from storage"""
+    try:
+        result = email_storage.clear_all_emails()
+        return jsonify(result), 200
+    except Exception as e:
+        logger.error(f"Error clearing emails: {e}")
         return jsonify({'error': str(e)}), 500
 
 # ============= HEALTH CHECK =============

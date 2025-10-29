@@ -3,7 +3,7 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
-import { Clock, AlertCircle, CheckCircle, Loader2, XCircle, Inbox, Archive, CheckSquare } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle, Loader2, XCircle, Inbox, Archive, CheckSquare, Trash2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface EmailListProps {
@@ -15,6 +15,7 @@ interface EmailListProps {
   onSelectAll: (emailIds: string[]) => void;
   onClearSelection: () => void;
   onProcessSelected: () => void;
+  onDeleteEmail: (emailId: string) => void;
   language: 'en' | 'it';
 }
 
@@ -27,6 +28,7 @@ export function EmailList({
   onSelectAll,
   onClearSelection,
   onProcessSelected,
+  onDeleteEmail,
   language 
 }: EmailListProps) {
   const { t } = useTranslation(language);
@@ -153,6 +155,20 @@ export function EmailList({
               </Badge>
             )}
           </button>
+          
+          {email.status === 'not_processed' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteEmail(email.id);
+              }}
+              className="shrink-0 h-8 w-8 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     );

@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Mail, Clock, TrendingUp, Play } from "lucide-react";
+import { Mail, Clock, TrendingUp, Play, Trash2 } from "lucide-react";
 import { useState } from 'react';
 
 interface CompactEmailListProps {
@@ -12,6 +12,7 @@ interface CompactEmailListProps {
   title: string;
   onEmailClick: (email: Email) => void;
   onProcess?: (email: Email) => void;
+  onDelete?: (emailId: string) => void;
   showProcessButton?: boolean;
   departments: Department[];
   showDepartmentFilter?: boolean; // new prop to control filter type
@@ -22,6 +23,7 @@ export function CompactEmailList({
   title, 
   onEmailClick, 
   onProcess, 
+  onDelete,
   showProcessButton = false,
   departments,
   showDepartmentFilter = true // default to department filter
@@ -179,20 +181,35 @@ export function CompactEmailList({
                         {email.confidence}%
                       </div>
                     )}
-                    {showProcessButton && email.status === 'not_processed' && onProcess && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-1 h-6 text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onProcess(email);
-                        }}
-                      >
-                        <Play className="w-3 h-3 mr-1" />
-                        Process
-                      </Button>
-                    )}
+                    <div className="flex gap-1">
+                      {showProcessButton && email.status === 'not_processed' && onProcess && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-6 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onProcess(email);
+                          }}
+                        >
+                          <Play className="w-3 h-3 mr-1" />
+                          Process
+                        </Button>
+                      )}
+                      {email.status === 'not_processed' && onDelete && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="mt-1 h-6 w-6 p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(email.id);
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
