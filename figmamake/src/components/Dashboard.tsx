@@ -16,40 +16,56 @@ interface DashboardProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 export function Dashboard({ toProcessEmails, processedEmails, historicalStats }: DashboardProps) {
-  // Today's emails (filter by today's date)
+  // Today's date normalized
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const todayEmails = [...toProcessEmails, ...processedEmails].filter(email => {
-    if (!email.timestamp) return false;
-    
-    // Handle both Date objects and strings
-    const emailDate = email.timestamp instanceof Date 
-      ? new Date(email.timestamp) 
-      : new Date(email.timestamp);
-    
-    emailDate.setHours(0, 0, 0, 0);
-    
-    const isToday = emailDate.getTime() === today.getTime();
-    
-    // Debug log
-    if (isToday) {
-      console.log('📅 Today email found:', {
-        subject: email.subject,
-        timestamp: email.timestamp,
-        emailDate: emailDate.toISOString(),
-        today: today.toISOString(),
-        status: email.status
-      });
+  // All emails from today (received today OR processed today)
+  const allTodayEmails = [...toProcessEmails, ...processedEmails].filter(email => {
+    // Check if received today
+    if (email.timestamp) {
+      const receivedDate = email.timestamp instanceof Date 
+        ? new Date(email.timestamp) 
+        : new Date(email.timestamp);
+      receivedDate.setHours(0, 0, 0, 0);
+      if (receivedDate.getTime() === today.getTime()) return true;
     }
     
-    return isToday;
+    // Check if processed today
+    if (email.processedAt) {
+      const processedDate = email.processedAt instanceof Date 
+        ? new Date(email.processedAt) 
+        : new Date(email.processedAt);
+      processedDate.setHours(0, 0, 0, 0);
+      if (processedDate.getTime() === today.getTime()) return true;
+    }
+    
+    return false;
   });
   
-  console.log(`📊 Dashboard - Today's emails: ${todayEmails.length}, Total: ${toProcessEmails.length + processedEmails.length}`);
+  // Filter emails PROCESSED today (based on processedAt)
+  // "Processed" means analyzed by AI - includes both forwarded AND cancelled emails
+  // The AI analysis, confidence, and suggested department are SAVED and persist
+  // until the email is actually forwarded (status='forwarded')
+  const processedToday = allTodayEmails.filter(email => {
+    if (!email.processedAt) return false;
+    
+    const processedDate = email.processedAt instanceof Date 
+      ? new Date(email.processedAt) 
+      : new Date(email.processedAt);
+    
+    processedDate.setHours(0, 0, 0, 0);
+    return processedDate.getTime() === today.getTime();
+  });
   
-  const todayProcessed = todayEmails.filter(e => e.status === 'forwarded' || e.status === 'cancelled');
-  const todayToProcess = todayEmails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error');
+  console.log(`📊 Dashboard - Total today: ${allTodayEmails.length}, Processed today: ${processedToday.length}`);
+  
+  const todayForwarded = processedToday.filter(e => e.status === 'forwarded');
+  const todayProcessedNotForwarded = processedToday.filter(e => e.status !== 'forwarded' && e.status !== 'not_processed');
+  const todayToProcess = allTodayEmails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error');
+  const todayAvgConfidence = processedToday.length > 0 
+    ? (processedToday.reduce((sum, e) => sum + (e.confidence || 0), 0) / processedToday.length).toFixed(0)
+    : 0;
   
   // Calcola statistiche (today)
   const totalEmails = toProcessEmails.length + processedEmails.length;
@@ -90,20 +106,28 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
     <div className="mb-4 flex-shrink-0">
       {/* Statistiche generali - Due card affiancate */}
       <div className="grid grid-cols-2 gap-3 mb-3">
-        {/* Today Stats */}
+        {/* Processed Today */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">📅 Today's Overview</CardTitle>
+            <CardTitle className="text-base">📅 Processed Today</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-5 gap-2">
               <div className="text-center">
-                <div className="text-2xl font-bold">{todayEmails.length}</div>
+                <div className="text-2xl font-bold">{allTodayEmails.length}</div>
                 <div className="text-xs text-gray-500">Total</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{todayProcessed.length}</div>
+                <div className="text-2xl font-bold text-green-600">{todayForwarded.length}</div>
+                <div className="text-xs text-gray-500">Forwarded</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{todayProcessedNotForwarded.length}</div>
                 <div className="text-xs text-gray-500">Processed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{todayAvgConfidence}%</div>
+                <div className="text-xs text-gray-500">Confidence</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">{todayToProcess.length}</div>
@@ -116,21 +140,33 @@ export function Dashboard({ toProcessEmails, processedEmails, historicalStats }:
         {/* All Time Stats */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">📊 All Time Stats</CardTitle>
+            <CardTitle className="text-base">📊 All Time Statistics</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-5 gap-2">
               <div className="text-center">
                 <div className="text-2xl font-bold">{historicalStats?.totalReceived || totalEmails}</div>
-                <div className="text-xs text-gray-500">Received</div>
+                <div className="text-xs text-gray-500">Total</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">{historicalStats?.totalProcessed || processedCount}</div>
+                <div className="text-xs text-gray-500">Forwarded</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{processedEmails.filter(e => e.status !== 'forwarded').length}</div>
                 <div className="text-xs text-gray-500">Processed</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{avgConfidence}%</div>
-                <div className="text-xs text-gray-500">Avg Confidence</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {processedEmails.length > 0 
+                    ? (processedEmails.reduce((sum, e) => sum + (e.confidence || 0), 0) / processedEmails.length).toFixed(0)
+                    : 0}%
+                </div>
+                <div className="text-xs text-gray-500">Confidence</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">{totalEmails - processedCount}</div>
+                <div className="text-xs text-gray-500">To Process</div>
               </div>
             </div>
           </CardContent>

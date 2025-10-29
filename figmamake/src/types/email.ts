@@ -7,7 +7,8 @@ export interface Email {
   aiReasoning?: string;
   suggestedDepartment: string;
   confidence: number;
-  timestamp: string | Date; // Support both formats
+  timestamp: string | Date; // Support both formats - when email was received
+  processedAt?: string | Date; // When email was processed/forwarded
   attachments: string[];
   status: 'not_processed' | 'forwarded' | 'cancelled' | 'analyzing' | 'error';
   forwardedToDepartment?: string;

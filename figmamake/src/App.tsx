@@ -38,14 +38,11 @@ export default function App() {
     totalReceived: number;
     byDepartment: Record<string, number>;
     lastUpdated: string;
-  }>(() => {
-    const saved = localStorage.getItem('emailStats');
-    return saved ? JSON.parse(saved) : {
-      totalProcessed: 0,
-      totalReceived: 0,
-      byDepartment: {},
-      lastUpdated: new Date().toISOString()
-    };
+  }>({
+    totalProcessed: 0,
+    totalReceived: 0,
+    byDepartment: {},
+    lastUpdated: new Date().toISOString()
   });
   
   // Initialize with default settings (will be loaded from backend)
@@ -83,31 +80,43 @@ export default function App() {
   
   const { t } = useTranslation(settings.language);
   
-  // Save historical stats to localStorage
+  // Load historical stats from backend on mount
   useEffect(() => {
-    localStorage.setItem('emailStats', JSON.stringify(historicalStats));
-  }, [historicalStats]);
+    const loadStats = async () => {
+      try {
+        const stats = await apiService.getStats();
+        setHistoricalStats(stats);
+        console.log('Historical stats loaded from backend:', stats);
+      } catch (error) {
+        console.error('Failed to load stats from backend:', error);
+      }
+    };
+    
+    if (settingsLoaded) {
+      loadStats();
+    }
+  }, [settingsLoaded]);
   
   // Update historical stats when email is forwarded
-  const updateHistoricalStats = (email: Email, department: string) => {
-    setHistoricalStats(prev => ({
-      ...prev,
-      totalProcessed: prev.totalProcessed + 1,
-      byDepartment: {
-        ...prev.byDepartment,
-        [department]: (prev.byDepartment[department] || 0) + 1
-      },
-      lastUpdated: new Date().toISOString()
-    }));
+  const updateHistoricalStats = async (email: Email, department: string) => {
+    try {
+      const updatedStats = await apiService.updateProcessedEmail(department);
+      setHistoricalStats(updatedStats);
+      console.log('Historical stats updated:', updatedStats);
+    } catch (error) {
+      console.error('Failed to update stats:', error);
+    }
   };
   
   // Update total received count when new emails arrive
-  const updateReceivedCount = (count: number) => {
-    setHistoricalStats(prev => ({
-      ...prev,
-      totalReceived: prev.totalReceived + count,
-      lastUpdated: new Date().toISOString()
-    }));
+  const updateReceivedCount = async (count: number) => {
+    try {
+      const updatedStats = await apiService.updateReceivedCount(count);
+      setHistoricalStats(updatedStats);
+      console.log('Received count updated:', updatedStats);
+    } catch (error) {
+      console.error('Failed to update received count:', error);
+    }
   };
   
   // Load settings from backend on mount (single source of truth)
@@ -330,12 +339,13 @@ export default function App() {
             }
           });
           
-          // Update email with AI analysis results
+          // Update email with AI analysis results and mark as processed
           const updatedEmail = {
             ...email,
             suggestedDepartment: result.analysis.reparto_suggerito,
             confidence: result.analysis.confidence,
-            status: 'processed' as const
+            status: 'processed' as const,
+            processedAt: new Date().toISOString() // Add timestamp when AI processes it
           };
           
           setEmails(prev =>
@@ -400,11 +410,16 @@ export default function App() {
           } : undefined
         );
         
-        // Update email status
+        // Update email status and add processedAt timestamp
         setEmails(prev =>
           prev.map(e =>
             e.id === emailId
-              ? { ...e, status: 'forwarded' as const, forwardedToDepartment: department }
+              ? { 
+                  ...e, 
+                  status: 'forwarded' as const, 
+                  forwardedToDepartment: department,
+                  processedAt: new Date().toISOString()
+                }
               : e
           )
         );
@@ -485,9 +500,10 @@ export default function App() {
       
       toast.dismiss(loadingToast);
       
-      // Update email status
+      // Update email status and add processedAt timestamp
       const processedIds = emailsToProcess.map(e => e.id);
       const departmentMap = new Map(emailsToProcess.map(e => [e.id, e.suggestedDepartment]));
+      const processedAt = new Date().toISOString();
       
       setEmails(prev =>
         prev.map(email =>
@@ -495,7 +511,8 @@ export default function App() {
             ? { 
                 ...email, 
                 status: 'forwarded' as const,
-                forwardedToDepartment: departmentMap.get(email.id)
+                forwardedToDepartment: departmentMap.get(email.id),
+                processedAt: processedAt
               }
             : email
         )
@@ -541,10 +558,16 @@ export default function App() {
 
     const processedIds = emailsToProcess.map(e => e.id);
 
+    // Mark as cancelled but keep processedAt to track it was analyzed
+    // This allows "Processed" count to include cancelled emails
     setEmails(prev =>
       prev.map(email =>
         processedIds.includes(email.id)
-          ? { ...email, status: 'cancelled' as const }
+          ? { 
+              ...email, 
+              status: 'cancelled' as const,
+              processedAt: new Date().toISOString() 
+            }
           : email
       )
     );

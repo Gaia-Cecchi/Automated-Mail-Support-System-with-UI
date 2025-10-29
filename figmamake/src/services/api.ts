@@ -200,6 +200,52 @@ class ApiService {
     return this.request('/automation/status');
   }
 
+  // ============= STATISTICS =============
+
+  async getStats(): Promise<{
+    totalProcessed: number;
+    totalReceived: number;
+    byDepartment: Record<string, number>;
+    lastUpdated: string;
+  }> {
+    return this.request('/stats');
+  }
+
+  async updateReceivedCount(count: number): Promise<{
+    totalProcessed: number;
+    totalReceived: number;
+    byDepartment: Record<string, number>;
+    lastUpdated: string;
+  }> {
+    return this.request('/stats/received', {
+      method: 'POST',
+      body: JSON.stringify({ count }),
+    });
+  }
+
+  async updateProcessedEmail(department: string): Promise<{
+    totalProcessed: number;
+    totalReceived: number;
+    byDepartment: Record<string, number>;
+    lastUpdated: string;
+  }> {
+    return this.request('/stats/processed', {
+      method: 'POST',
+      body: JSON.stringify({ department }),
+    });
+  }
+
+  async resetStats(): Promise<{
+    totalProcessed: number;
+    totalReceived: number;
+    byDepartment: Record<string, number>;
+    lastUpdated: string;
+  }> {
+    return this.request('/stats/reset', {
+      method: 'POST',
+    });
+  }
+
   // ============= HEALTH CHECK =============
 
   async healthCheck(): Promise<{
