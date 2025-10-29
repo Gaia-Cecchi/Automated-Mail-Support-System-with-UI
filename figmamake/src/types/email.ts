@@ -21,6 +21,7 @@ export interface Department {
   nome: string;
   descrizione: string;
   email: string;
+  colore?: string; // Colore associato al department (es. '#FF6B6B', '#4ECDC4', etc.)
 }
 
 export interface AppSettings {
