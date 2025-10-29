@@ -79,10 +79,18 @@ class TicketProcessorSimple:
             # Prompt
             system_prompt = """You are an AI assistant expert in classifying support tickets.
 Analyze the provided email and determine which department should handle it.
+
+IMPORTANT: Evaluate confidence CAREFULLY based on:
+- Clear technical terms or product mentions = 90-100% confidence
+- General support requests with some context = 70-85% confidence  
+- Marketing/promotional emails = 60-80% confidence
+- Unclear or ambiguous requests = 40-65% confidence
+- Completely unclear or spam = 10-40% confidence
+
 Respond ONLY with valid JSON in the format:
 {
     "reparto_suggerito": "exact_department_name",
-    "confidence": 85,
+    "confidence": 75,
     "summary": "Brief problem summary (max 100 characters)",
     "reasoning": "Choice reasoning (max 150 characters)"
 }"""
@@ -145,6 +153,10 @@ Choose one of the departments listed above. If confidence < 70%, indicate need f
             result_text = result_text.strip()
             
             result = json.loads(result_text)
+            
+            # LOG DETTAGLIATO PER DEBUG CONFIDENCE
+            logger.info(f"🔍 PARSED JSON RESULT: {json.dumps(result, indent=2)}")
+            logger.info(f"🔍 CONFIDENCE VALUE: {result.get('confidence')} (type: {type(result.get('confidence'))})")
             
             # Validate
             required = ['reparto_suggerito', 'confidence', 'summary']

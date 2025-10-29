@@ -7,12 +7,13 @@ export interface Email {
   aiReasoning?: string;
   suggestedDepartment: string;
   confidence: number;
-  timestamp: Date;
+  timestamp: string | Date; // Support both formats
   attachments: string[];
   status: 'not_processed' | 'forwarded' | 'cancelled' | 'analyzing' | 'error';
   forwardedToDepartment?: string;
   error?: string;
   notes?: string;
+  pdfContent?: string; // Add missing field
 }
 
 export interface Department {

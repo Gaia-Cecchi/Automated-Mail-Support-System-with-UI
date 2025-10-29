@@ -5,12 +5,53 @@ import { Email } from '../types/email';
 interface DashboardProps {
   toProcessEmails: Email[];
   processedEmails: Email[];
+  historicalStats?: {
+    totalProcessed: number;
+    totalReceived: number;
+    byDepartment: Record<string, number>;
+    lastUpdated: string;
+  };
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-export function Dashboard({ toProcessEmails, processedEmails }: DashboardProps) {
-  // Calcola statistiche
+export function Dashboard({ toProcessEmails, processedEmails, historicalStats }: DashboardProps) {
+  // Today's emails (filter by today's date)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const todayEmails = [...toProcessEmails, ...processedEmails].filter(email => {
+    if (!email.timestamp) return false;
+    
+    // Handle both Date objects and strings
+    const emailDate = email.timestamp instanceof Date 
+      ? new Date(email.timestamp) 
+      : new Date(email.timestamp);
+    
+    emailDate.setHours(0, 0, 0, 0);
+    
+    const isToday = emailDate.getTime() === today.getTime();
+    
+    // Debug log
+    if (isToday) {
+      console.log('📅 Today email found:', {
+        subject: email.subject,
+        timestamp: email.timestamp,
+        emailDate: emailDate.toISOString(),
+        today: today.toISOString(),
+        status: email.status
+      });
+    }
+    
+    return isToday;
+  });
+  
+  console.log(`📊 Dashboard - Today's emails: ${todayEmails.length}, Total: ${toProcessEmails.length + processedEmails.length}`);
+  
+  const todayProcessed = todayEmails.filter(e => e.status === 'forwarded' || e.status === 'cancelled');
+  const todayToProcess = todayEmails.filter(e => e.status === 'not_processed' || e.status === 'analyzing' || e.status === 'error');
+  
+  // Calcola statistiche (today)
   const totalEmails = toProcessEmails.length + processedEmails.length;
   const processedCount = processedEmails.length;
   const toProcessCount = toProcessEmails.length;
@@ -47,36 +88,54 @@ export function Dashboard({ toProcessEmails, processedEmails }: DashboardProps) 
 
   return (
     <div className="mb-4 flex-shrink-0">
-      {/* Statistiche generali - compatta */}
-      <Card className="mb-3">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Email Overview</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-5 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{totalEmails}</div>
-              <div className="text-xs text-gray-500">Total</div>
+      {/* Statistiche generali - Due card affiancate */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {/* Today Stats */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">📅 Today's Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{todayEmails.length}</div>
+                <div className="text-xs text-gray-500">Total</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{todayProcessed.length}</div>
+                <div className="text-xs text-gray-500">Processed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">{todayToProcess.length}</div>
+                <div className="text-xs text-gray-500">To Process</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{processedCount}</div>
-              <div className="text-xs text-gray-500">Processed</div>
+          </CardContent>
+        </Card>
+
+        {/* All Time Stats */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">📊 All Time Stats</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <div className="text-2xl font-bold">{historicalStats?.totalReceived || totalEmails}</div>
+                <div className="text-xs text-gray-500">Received</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{historicalStats?.totalProcessed || processedCount}</div>
+                <div className="text-xs text-gray-500">Processed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{avgConfidence}%</div>
+                <div className="text-xs text-gray-500">Avg Confidence</div>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{toProcessCount}</div>
-              <div className="text-xs text-gray-500">To Process</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{processedPercentage}%</div>
-              <div className="text-xs text-gray-500">Completion</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{avgConfidence}%</div>
-              <div className="text-xs text-gray-500">Avg Confidence</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Grafici affiancati */}
       <div className="grid grid-cols-2 gap-3">

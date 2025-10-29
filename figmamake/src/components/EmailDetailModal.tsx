@@ -29,15 +29,30 @@ export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDet
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent 
+        className="flex flex-col p-0 gap-0"
+        style={{
+          width: '95vw',
+          maxWidth: '95vw',
+          height: '90vh',
+          maxHeight: '90vh'
+        }}
+      >
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center justify-between">
             <span>{email.subject}</span>
             {getStatusBadge(email.status)}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div 
+          className="px-6 py-4 overflow-y-scroll"
+          style={{
+            flex: '1 1 0',
+            minHeight: 0
+          }}
+        >
+          <div className="space-y-4">
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
@@ -107,17 +122,18 @@ export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDet
               <p className="mt-1 text-sm text-red-700">{email.error}</p>
             </div>
           )}
-
-          {/* Actions */}
-          {email.status === 'not_processed' && onProcess && (
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={onClose}>Close</Button>
-              <Button onClick={() => onProcess(email)}>
-                Process Email
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
+
+        {/* Actions */}
+        {email.status === 'not_processed' && onProcess && (
+          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-gray-50 shrink-0">
+            <Button variant="outline" onClick={onClose}>Close</Button>
+            <Button onClick={() => onProcess(email)}>
+              Process Email
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
