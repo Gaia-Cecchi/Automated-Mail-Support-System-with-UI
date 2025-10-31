@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Email } from '../types/email';
+import { Email, Department } from '../types/email';
+import { getDepartmentColor } from '../utils/colors';
 
 interface DashboardProps {
   emails: Email[];
+  departments: Department[];
   historicalStats?: {
     totalProcessed: number;
     totalReceived: number;
@@ -13,9 +15,7 @@ interface DashboardProps {
   };
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
-
-export function Dashboard({ emails, historicalStats }: DashboardProps) {
+export function Dashboard({ emails, departments, historicalStats }: DashboardProps) {
   // Today's date normalized
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -217,7 +217,7 @@ export function Dashboard({ emails, historicalStats }: DashboardProps) {
                     dataKey="value"
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={getDepartmentColor(entry.name, departments)} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -243,7 +243,11 @@ export function Dashboard({ emails, historicalStats }: DashboardProps) {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="confidence" fill="#8884d8" />
+                  <Bar dataKey="confidence">
+                    {barData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getDepartmentColor(entry.name, departments)} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (

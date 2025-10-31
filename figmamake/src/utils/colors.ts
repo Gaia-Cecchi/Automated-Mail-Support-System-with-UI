@@ -2,8 +2,11 @@
  * Utility per gestire i colori dei department
  */
 
+import { ICON_COMPONENTS, DEFAULT_DEPARTMENT_ICON } from './departmentIcons';
+import type { Department } from '../types/email';
+
 // Palette di colori predefiniti per i department - colori molto distinti
-const DEPARTMENT_COLORS = [
+export const PREDEFINED_COLORS = [
   '#FF0000', // Rosso brillante
   '#00FF00', // Verde lime
   '#0000FF', // Blu elettrico
@@ -30,10 +33,16 @@ const DEPARTMENT_COLORS = [
  * Genera un colore consistente basato sul nome del department
  * Utilizza un hash semplice per garantire che lo stesso nome produca sempre lo stesso colore
  */
-export function getDepartmentColor(departmentName: string): string {
+export function getDepartmentColor(departmentName: string, departments?: Department[]): string {
   if (!departmentName) return '#6B7280'; // Colore grigio di default
 
-  // Calcola un hash semplice basato sul nome
+  // Se abbiamo l'array di dipartimenti, cerca il colore personalizzato
+  if (departments) {
+    const dept = departments.find(d => d.nome === departmentName);
+    if (dept?.color) return dept.color;
+  }
+
+  // Fallback: calcola un hash semplice basato sul nome
   let hash = 0;
   for (let i = 0; i < departmentName.length; i++) {
     const char = departmentName.charCodeAt(i);
@@ -45,8 +54,8 @@ export function getDepartmentColor(departmentName: string): string {
   hash = Math.abs(hash);
 
   // Seleziona un colore dalla palette
-  const colorIndex = hash % DEPARTMENT_COLORS.length;
-  return DEPARTMENT_COLORS[colorIndex];
+  const colorIndex = hash % PREDEFINED_COLORS.length;
+  return PREDEFINED_COLORS[colorIndex];
 }
 
 /**
@@ -73,4 +82,38 @@ export function getContrastTextColor(backgroundColor: string): string {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
   return brightness > 128 ? '#000000' : '#FFFFFF';
+}
+
+/**
+ * Ottiene il componente icona per un dipartimento
+ * Se il dipartimento non ha un'icona specificata, usa quella di default
+ */
+export function getDepartmentIcon(department: Department | string, departments?: Department[]): any {
+  let iconName: string;
+  
+  if (typeof department === 'string') {
+    // Se è una stringa e abbiamo l'array di dipartimenti, cerca l'icona personalizzata
+    if (departments) {
+      const dept = departments.find(d => d.nome === department);
+      iconName = dept?.icon || DEFAULT_DEPARTMENT_ICON;
+    } else {
+      iconName = DEFAULT_DEPARTMENT_ICON;
+    }
+  } else {
+    iconName = department.icon || DEFAULT_DEPARTMENT_ICON;
+  }
+    
+  return ICON_COMPONENTS[iconName] || ICON_COMPONENTS[DEFAULT_DEPARTMENT_ICON];
+}
+
+/**
+ * Ottiene il colore per un dipartimento
+ * Se il dipartimento ha un colore personalizzato lo usa, altrimenti genera uno basato sul nome
+ */
+export function getDepartmentColorSafe(department: Department | string, departments?: Department[]): string {
+  if (typeof department === 'string') {
+    return getDepartmentColor(department, departments);
+  }
+  
+  return department.color || getDepartmentColor(department.nome, departments);
 }

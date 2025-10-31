@@ -92,13 +92,21 @@ export function QuickDepartmentsButton({ departments, language, onUpdateDepartme
           </span>
         </Button>
       </DialogTrigger>
-            <DialogContent 
+      <DialogContent 
         className="max-w-7xl"
-        style={{ width: '90vw', maxWidth: '90vw', height: '85vh', maxHeight: '85vh' }}
+        style={{ 
+          width: '90vw', 
+          maxWidth: '90vw', 
+          height: '85vh', 
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0px'
+        }}
       >
-        <DialogHeader className="shrink-0 pb-4 border-b">
+        <DialogHeader className="shrink-0" style={{ marginBottom: '8px' }}>
           <DialogTitle>{translations.viewDepartments}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription style={{ marginTop: '4px' }}>
             {departments.length} {translations.totalDepts}
           </DialogDescription>
         </DialogHeader>
@@ -127,7 +135,7 @@ export function QuickDepartmentsButton({ departments, language, onUpdateDepartme
                       <div className="flex items-center gap-2">
                         <div
                           className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: getDepartmentColor(dept.nome) }}
+                          style={{ backgroundColor: getDepartmentColor(dept.nome, departments) }}
                         />
                         <span className="break-words">{dept.nome}</span>
                       </div>
@@ -142,7 +150,9 @@ export function QuickDepartmentsButton({ departments, language, onUpdateDepartme
                         className="h-8"
                       />
                     ) : (
-                      <span className="break-words text-sm">{dept.descrizione}</span>
+                      <span className="break-words text-sm line-clamp-2" title={dept.descrizione}>
+                        {dept.descrizione}
+                      </span>
                     )}
                   </TableCell>
                   

@@ -164,7 +164,9 @@ def save_settings():
                     reparti_manager.add_reparto(
                         dept['nome'],
                         dept['descrizione'],
-                        dept['email']
+                        dept['email'],
+                        dept.get('icon'),
+                        dept.get('color')
                     )
                 reparti_manager.save()
                 logger.info(f"Departments updated. New count: {len(reparti_manager.get_all())}")

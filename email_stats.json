@@ -1,6 +1,6 @@
 {
   "totalProcessed": 52,
-  "totalReceived": 86,
+  "totalReceived": 95,
   "byDepartment": {
     "Gaming & Entertainment": 23,
     "Technical Support": 9,
@@ -8,7 +8,7 @@
     "Service Notifications": 11,
     "Sales": 4
   },
-  "lastUpdated": "2025-10-29T17:14:08.555995",
+  "lastUpdated": "2025-10-31T16:20:22.113450",
   "confidenceByDepartment": {
     "Sales": {
       "total": 350.0,

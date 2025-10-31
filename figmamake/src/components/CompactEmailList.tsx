@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Mail, Clock, TrendingUp, Play, Trash2 } from "lucide-react";
 import { useState } from 'react';
-import { getDepartmentColor, getContrastTextColor } from '../utils/colors';
+import { getDepartmentColor, getContrastTextColor, getDepartmentIcon } from '../utils/colors';
 
 interface CompactEmailListProps {
   emails: Email[];
@@ -174,12 +174,18 @@ export function CompactEmailList({
                     <div className="flex flex-col items-center gap-1">
                       {(email.suggestedDepartment || email.forwardedToDepartment) && (
                         <Badge 
-                          className="text-xs" 
+                          className="text-xs flex items-center gap-1" 
                           style={{
-                            backgroundColor: getDepartmentColor(email.forwardedToDepartment || email.suggestedDepartment || ''),
-                            color: getContrastTextColor(getDepartmentColor(email.forwardedToDepartment || email.suggestedDepartment || ''))
+                            backgroundColor: getDepartmentColor(email.forwardedToDepartment || email.suggestedDepartment || '', departments),
+                            color: getContrastTextColor(getDepartmentColor(email.forwardedToDepartment || email.suggestedDepartment || '', departments))
                           }}
                         >
+                          {(() => {
+                            const deptName = email.forwardedToDepartment || email.suggestedDepartment || '';
+                            const Icon = getDepartmentIcon(deptName, departments);
+                            const color = getContrastTextColor(getDepartmentColor(deptName, departments));
+                            return <Icon className="w-3 h-3" style={{ color }} />;
+                          })()}
                           {email.forwardedToDepartment || email.suggestedDepartment}
                         </Badge>
                       )}

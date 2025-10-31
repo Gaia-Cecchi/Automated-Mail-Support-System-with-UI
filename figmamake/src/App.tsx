@@ -903,6 +903,7 @@ export default function App() {
         {/* Dashboard */}
         <Dashboard 
           emails={emails}
+          departments={settings.departments}
           historicalStats={historicalStats}
         />
         
@@ -935,6 +936,7 @@ export default function App() {
       <EmailDetailModal
         email={emailToView}
         isOpen={emailDetailModalOpen}
+        departments={settings.departments}
         onClose={() => {
           setEmailDetailModalOpen(false);
           setEmailToView(null);

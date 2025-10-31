@@ -37,6 +37,8 @@ export interface Department {
   nome: string;
   descrizione: string;
   email: string;
+  icon?: string;
+  color?: string;
 }
 
 export interface AppSettings {

@@ -1,11 +1,11 @@
-import { Email } from '../types/email';
+import { Email, Department } from '../types/email';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Button } from './ui/button';
 import { Clock, AlertCircle, CheckCircle, Loader2, XCircle, Inbox, Archive, CheckSquare, Trash2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
-import { getDepartmentColor, getContrastTextColor } from '../utils/colors';
+import { getDepartmentColor, getContrastTextColor, getDepartmentIcon } from '../utils/colors';
 
 interface EmailListProps {
   emails: Email[];
@@ -134,26 +134,31 @@ export function EmailList({
               {email.subject}
             </div>
             
-            {(email.status === 'not_processed' || email.status === 'analyzing') && (
-              <Badge className={`text-xs ${
-                email.confidence >= 85 
+            {email.status === 'not_processed' && email.suggestedDepartment && (
+              <Badge className={`text-xs flex items-center gap-1 ${
+                email.confidence >= 80 
                   ? 'bg-green-500/20 text-green-700 dark:text-green-400' 
                   : email.confidence >= 70 
                   ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' 
                   : 'bg-red-500/20 text-red-700 dark:text-red-400'
               }`}>
-                <span
-                  className="inline-block w-2 h-2 rounded-full mr-1"
-                  style={{ backgroundColor: getDepartmentColor(email.suggestedDepartment || '') }}
-                />
+                {(() => {
+                  const Icon = getDepartmentIcon(email.suggestedDepartment);
+                  return <Icon className="w-3 h-3" style={{ color: getDepartmentColor(email.suggestedDepartment) }} />;
+                })()}
                 {email.suggestedDepartment} • {email.confidence}%
               </Badge>
             )}
             {email.status === 'forwarded' && (
-              <Badge className="text-xs" style={{
+              <Badge className="text-xs flex items-center gap-1" style={{
                 backgroundColor: email.forwardedToDepartment ? getDepartmentColor(email.forwardedToDepartment) : '#6B7280',
                 color: email.forwardedToDepartment ? getContrastTextColor(getDepartmentColor(email.forwardedToDepartment)) : '#FFFFFF'
               }}>
+                {email.forwardedToDepartment && (() => {
+                  const Icon = getDepartmentIcon(email.forwardedToDepartment);
+                  const color = getContrastTextColor(getDepartmentColor(email.forwardedToDepartment));
+                  return <Icon className="w-3 h-3" style={{ color }} />;
+                })()}
                 ✅ {t('forwarded')}
                 {email.forwardedToDepartment && (
                   <>
@@ -164,10 +169,15 @@ export function EmailList({
               </Badge>
             )}
             {email.status === 'cancelled' && (
-              <Badge className="text-xs" style={{
+              <Badge className="text-xs flex items-center gap-1" style={{
                 backgroundColor: email.suggestedDepartment ? getDepartmentColor(email.suggestedDepartment) : '#6B7280',
                 color: email.suggestedDepartment ? getContrastTextColor(getDepartmentColor(email.suggestedDepartment)) : '#FFFFFF'
               }}>
+                {email.suggestedDepartment && (() => {
+                  const Icon = getDepartmentIcon(email.suggestedDepartment);
+                  const color = getContrastTextColor(getDepartmentColor(email.suggestedDepartment));
+                  return <Icon className="w-3 h-3" style={{ color }} />;
+                })()}
                 {t('cancelled')}
               </Badge>
             )}

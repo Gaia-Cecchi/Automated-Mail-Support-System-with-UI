@@ -29,7 +29,7 @@ class RepartiManager:
         with open(self.reparti_file, 'w') as f:
             json.dump(self._reparti, f, indent=2)
     
-    def add_reparto(self, nome: str, descrizione: str, email: str) -> bool:
+    def add_reparto(self, nome: str, descrizione: str, email: str, icon: Optional[str] = None, color: Optional[str] = None) -> bool:
         """Add a department"""
         if not nome or not email:
             return False
@@ -38,11 +38,19 @@ class RepartiManager:
         if any(r['nome'] == nome for r in self._reparti):
             return False
         
-        self._reparti.append({
+        dept_data = {
             'nome': nome,
             'descrizione': descrizione,
             'email': email
-        })
+        }
+        
+        # Add optional fields only if provided
+        if icon:
+            dept_data['icon'] = icon
+        if color:
+            dept_data['color'] = color
+        
+        self._reparti.append(dept_data)
         return True
     
     def remove_reparto(self, nome: str) -> bool:

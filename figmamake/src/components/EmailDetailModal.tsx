@@ -1,18 +1,19 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Email } from '../types/email';
+import { Email, Department } from '../types/email';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Mail, User, TrendingUp } from "lucide-react";
-import { getDepartmentColor, getContrastTextColor } from '../utils/colors';
+import { getDepartmentColor, getContrastTextColor, getDepartmentIcon } from '../utils/colors';
 
 interface EmailDetailModalProps {
   email: Email | null;
   isOpen: boolean;
   onClose: () => void;
   onProcess?: (email: Email) => void;
+  departments: Department[];
 }
 
-export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDetailModalProps) {
+export function EmailDetailModal({ email, isOpen, onClose, onProcess, departments }: EmailDetailModalProps) {
   if (!email) return null;
 
   const getStatusBadge = (status: Email['status']) => {
@@ -79,12 +80,17 @@ export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDet
                 <div>
                   <span className="font-medium">Suggested Department:</span>
                   <Badge
-                    className="ml-2"
+                    className="ml-2 inline-flex items-center gap-1"
                     style={{
-                      backgroundColor: getDepartmentColor(email.suggestedDepartment || ''),
-                      color: getContrastTextColor(getDepartmentColor(email.suggestedDepartment || ''))
+                      backgroundColor: getDepartmentColor(email.suggestedDepartment || '', departments),
+                      color: getContrastTextColor(getDepartmentColor(email.suggestedDepartment || '', departments))
                     }}
                   >
+                    {(() => {
+                      const Icon = getDepartmentIcon(email.suggestedDepartment || '', departments);
+                      const color = getContrastTextColor(getDepartmentColor(email.suggestedDepartment || '', departments));
+                      return <Icon className="w-3 h-3" style={{ color }} />;
+                    })()}
                     {email.suggestedDepartment}
                   </Badge>
                 </div>
@@ -121,12 +127,17 @@ export function EmailDetailModal({ email, isOpen, onClose, onProcess }: EmailDet
             <div className="border rounded-lg p-4 bg-green-50">
               <span className="font-medium">Forwarded to:</span>
               <Badge
-                className="ml-2"
+                className="ml-2 inline-flex items-center gap-1"
                 style={{
-                  backgroundColor: getDepartmentColor(email.forwardedToDepartment),
-                  color: getContrastTextColor(getDepartmentColor(email.forwardedToDepartment))
+                  backgroundColor: getDepartmentColor(email.forwardedToDepartment, departments),
+                  color: getContrastTextColor(getDepartmentColor(email.forwardedToDepartment, departments))
                 }}
               >
+                {(() => {
+                  const Icon = getDepartmentIcon(email.forwardedToDepartment, departments);
+                  const color = getContrastTextColor(getDepartmentColor(email.forwardedToDepartment, departments));
+                  return <Icon className="w-3 h-3" style={{ color }} />;
+                })()}
                 {email.forwardedToDepartment}
               </Badge>
             </div>

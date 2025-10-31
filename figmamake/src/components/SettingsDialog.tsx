@@ -12,7 +12,10 @@ import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { useTranslation } from '../hooks/useTranslation';
-import { getDepartmentColor } from '../utils/colors';
+import { getDepartmentColor, getDepartmentIcon, getDepartmentColorSafe } from '../utils/colors';
+import { DEFAULT_DEPARTMENT_ICON } from '../utils/departmentIcons';
+import { IconPicker } from './IconPicker';
+import { ColorPicker } from './ColorPicker';
 
 interface SettingsDialogProps {
   settings: AppSettings;
@@ -97,9 +100,21 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
     });
   };
 
-  const [newDept, setNewDept] = useState<Department>({ nome: '', descrizione: '', email: '' });
+  const [newDept, setNewDept] = useState<Department>({ 
+    nome: '', 
+    descrizione: '', 
+    email: '',
+    icon: DEFAULT_DEPARTMENT_ICON,
+    color: '#6B7280'
+  });
   const [editingDept, setEditingDept] = useState<string | null>(null);
-  const [editDeptData, setEditDeptData] = useState<Department>({ nome: '', descrizione: '', email: '' });
+  const [editDeptData, setEditDeptData] = useState<Department>({ 
+    nome: '', 
+    descrizione: '', 
+    email: '',
+    icon: DEFAULT_DEPARTMENT_ICON,
+    color: '#6B7280'
+  });
 
   const addDepartment = () => {
     if (newDept.nome && newDept.email && !localSettings.departments.find(d => d.nome === newDept.nome)) {
@@ -107,7 +122,13 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
         ...localSettings,
         departments: [...localSettings.departments, newDept]
       });
-      setNewDept({ nome: '', descrizione: '', email: '' });
+      setNewDept({ 
+        nome: '', 
+        descrizione: '', 
+        email: '',
+        icon: DEFAULT_DEPARTMENT_ICON,
+        color: '#6B7280'
+      });
     }
   };
 
@@ -125,7 +146,13 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
 
   const cancelEditDepartment = () => {
     setEditingDept(null);
-    setEditDeptData({ nome: '', descrizione: '', email: '' });
+    setEditDeptData({ 
+      nome: '', 
+      descrizione: '', 
+      email: '',
+      icon: DEFAULT_DEPARTMENT_ICON,
+      color: '#6B7280'
+    });
   };
 
   const saveEditDepartment = () => {
@@ -137,7 +164,13 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
         )
       });
       setEditingDept(null);
-      setEditDeptData({ nome: '', descrizione: '', email: '' });
+      setEditDeptData({ 
+        nome: '', 
+        descrizione: '', 
+        email: '',
+        icon: DEFAULT_DEPARTMENT_ICON,
+        color: '#6B7280'
+      });
     }
   };
 
@@ -429,23 +462,53 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
               <TabsContent value="departments" className="space-y-6 mt-0">
                 <Card className="p-4">
                   <Label className="text-base mb-4 block">{t('addNewDepartment')}</Label>
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    <Input
-                      placeholder={t('name')}
-                      value={newDept.nome}
-                      onChange={(e) => setNewDept({ ...newDept, nome: e.target.value })}
-                    />
+                  
+                  {/* Form inputs */}
+                  <div className="space-y-4 mb-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        placeholder={t('name')}
+                        value={newDept.nome}
+                        onChange={(e) => setNewDept({ ...newDept, nome: e.target.value })}
+                      />
+                      <Input
+                        placeholder={t('email')}
+                        value={newDept.email}
+                        onChange={(e) => setNewDept({ ...newDept, email: e.target.value })}
+                      />
+                    </div>
                     <Input
                       placeholder={t('description')}
                       value={newDept.descrizione}
                       onChange={(e) => setNewDept({ ...newDept, descrizione: e.target.value })}
                     />
-                    <Input
-                      placeholder={t('email')}
-                      value={newDept.email}
-                      onChange={(e) => setNewDept({ ...newDept, email: e.target.value })}
-                    />
+                    
+                    {/* Icon and Color Pickers */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <IconPicker
+                        value={newDept.icon || DEFAULT_DEPARTMENT_ICON}
+                        onChange={(icon) => setNewDept({ ...newDept, icon })}
+                        previewColor={newDept.color}
+                      />
+                      <ColorPicker
+                        value={newDept.color || '#6B7280'}
+                        onChange={(color) => setNewDept({ ...newDept, color })}
+                      />
+                    </div>
+                    
+                    {/* Preview */}
+                    <div className="p-3 border rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Preview:</p>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const Icon = getDepartmentIcon(newDept);
+                          return <Icon className="w-5 h-5" style={{ color: newDept.color || '#6B7280' }} />;
+                        })()}
+                        <span className="font-medium">{newDept.nome || 'Department Name'}</span>
+                      </div>
+                    </div>
                   </div>
+                  
                   <Button size="sm" onClick={addDepartment} className="w-full">
                     {t('addDepartment')}
                   </Button>
@@ -458,22 +521,14 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
                       <Card key={dept.nome} className="p-4">
                         {editingDept === dept.nome ? (
                           // Edit Mode
-                          <div className="space-y-3">
-                            <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-2">
                                 <Label className="text-xs">{t('name')}</Label>
                                 <Input
                                   value={editDeptData.nome}
                                   onChange={(e) => setEditDeptData({ ...editDeptData, nome: e.target.value })}
                                   placeholder={t('name')}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="text-xs">{t('description')}</Label>
-                                <Input
-                                  value={editDeptData.descrizione}
-                                  onChange={(e) => setEditDeptData({ ...editDeptData, descrizione: e.target.value })}
-                                  placeholder={t('description')}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -485,6 +540,28 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
                                 />
                               </div>
                             </div>
+                            
+                            <div className="space-y-2">
+                              <Label className="text-xs">{t('description')}</Label>
+                              <Input
+                                value={editDeptData.descrizione}
+                                onChange={(e) => setEditDeptData({ ...editDeptData, descrizione: e.target.value })}
+                                placeholder={t('description')}
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <IconPicker
+                                value={editDeptData.icon || DEFAULT_DEPARTMENT_ICON}
+                                onChange={(icon) => setEditDeptData({ ...editDeptData, icon })}
+                                previewColor={editDeptData.color}
+                              />
+                              <ColorPicker
+                                value={editDeptData.color || '#6B7280'}
+                                onChange={(color) => setEditDeptData({ ...editDeptData, color })}
+                              />
+                            </div>
+                            
                             <div className="flex gap-2 justify-end">
                               <Button
                                 variant="ghost"
@@ -511,10 +588,11 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <div
-                                  className="w-3 h-3 rounded-full flex-shrink-0 border border-gray-300 dark:border-gray-600"
-                                  style={{ backgroundColor: getDepartmentColor(dept.nome) }}
-                                />
+                                {(() => {
+                                  const Icon = getDepartmentIcon(dept);
+                                  const color = getDepartmentColorSafe(dept);
+                                  return <Icon className="w-5 h-5 flex-shrink-0" style={{ color }} />;
+                                })()}
                                 <p className="font-medium">{dept.nome}</p>
                               </div>
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
@@ -612,18 +690,19 @@ export function SettingsDialog({ settings, onSave, language, open: controlledOpe
                   </div>
                 </Card>
               </TabsContent>
+
+              {/* Action Buttons - Inside ScrollArea */}
+              <div className="flex justify-end gap-3 pt-6 border-t mt-6 pb-4">
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button onClick={handleSave}>
+                  {t('saveChanges')}
+                </Button>
+              </div>
             </div>
           </ScrollArea>
         </Tabs>
-
-        <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            {t('cancel')}
-          </Button>
-          <Button onClick={handleSave}>
-            {t('saveChanges')}
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );

@@ -21,7 +21,8 @@ export interface Department {
   nome: string;
   descrizione: string;
   email: string;
-  colore?: string; // Colore associato al department (es. '#FF6B6B', '#4ECDC4', etc.)
+  icon?: string; // Nome icona Lucide (es. 'Building2', 'Wrench', 'Heart')
+  color?: string; // Colore hex (es. '#FF6B6B', '#4ECDC4')
 }
 
 export interface AppSettings {
