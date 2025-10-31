@@ -21,6 +21,8 @@
 💾 **Persistenza Dati** - Storico email e statistiche salvate automaticamente  
 🌐 **Multilingua** - Supporto Italiano/Inglese  
 🎨 **UI Moderna** - Interfaccia responsive con tema scuro/chiaro  
+🎨 **Personalizzazione Dipartimenti** - Icon picker e color picker per customizzare ogni dipartimento  
+📋 **Gestione Dipartimenti Avanzata** - Visualizzazione rapida con tabella compatta e editing inline  
 
 ---
 
@@ -177,10 +179,16 @@ Model: gemma3:4b
 
 ### 4. Configura Dipartimenti (Tab Settings → Departments)
 
-Aggiungi i dipartimenti della tua organizzazione, ad esempio:
-- **Technical Support** - supporto@azienda.it
-- **Sales** - vendite@azienda.it  
-- **Administration** - amministrazione@azienda.it
+Aggiungi i dipartimenti della tua organizzazione con icone e colori personalizzati:
+
+- **Nome**: Technical Support
+- **Icona**: Wrench (scegli tra 200+ icone disponibili)
+- **Colore**: #3B82F6 (blu) - scegli dalla palette o inserisci un codice esadecimale
+- **Email**: supporto@azienda.it
+
+Le icone e i colori scelti appariranno ovunque: nei tag delle email, nei grafici della dashboard, e nella lista dipartimenti.
+
+**Gestione Rapida Dipartimenti**: Clicca sul pulsante "Departments" nell'header per visualizzare tutti i dipartimenti in una tabella compatta con editing inline.
 
 ### 5. Salva Configurazione
 
@@ -387,6 +395,9 @@ ollama run gemma3:4b "Hello"
 
 ## 🎯 Roadmap Future Features
 
+- [x] Icon picker e color picker per personalizzazione dipartimenti
+- [x] Quick view dipartimenti con tabella compatta
+- [x] Pulsanti Settings dentro al dialog modal
 - [ ] Supporto allegati PDF con OCR
 - [ ] Template personalizzabili per risposte automatiche
 - [ ] Dashboard analytics avanzate
